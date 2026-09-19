@@ -622,6 +622,7 @@ textarea.memory-box{
           <div class="field" style="margin-top:10px;"><label>Format</label></div>
           <select id="contentFormat" style="width:100%; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:12.5px; font-family:inherit;">
             <option value="LinkedIn">LinkedIn</option>
+            <option value="Makale">Makale (tam yazı)</option>
             <option value="Instagram">Instagram</option>
             <option value="X (Twitter)">X (Twitter)</option>
             <option value="Blog yazısı">Blog</option>
@@ -2288,6 +2289,7 @@ document.getElementById('contentGenerateBtn').addEventListener('click', async ()
     }
   }
   const formatRules = {
+    'Makale': 'Tam, yayına hazır bir MAKALE — en az 700, en fazla 10000 kelime. Giriş, gelişme (alt başlıklarla bölünmüş) ve sonuç bölümleri olsun, yüzeysel geçme, konuyu gerçekten işle, somut örnekler ver. Yazının EN SONUNA mutlaka şunu ekle: "🔑 Anahtar Kelimeler: " başlığı altında konuyla en ilgili 6-10 SEO anahtar kelimesi (virgülle ayrılmış), ardından "Etiketler:" başlığı altında 5-8 hashtag.',
     'LinkedIn': 'LinkedIn\'de okunması kolay kısa paragraflar, en az 150 en fazla 250 kelime, sonunda 5-8 ilgili hashtag.',
     'Instagram': 'Instagram paylaşımı gibi enerjik, kısa cümleler, emoji kullanımı ölçülü, sonunda 8-15 hashtag.',
     'X (Twitter)': 'X (Twitter) için tek bir gönderi, en fazla 280 karakter, vurucu ve net, sonunda 2-3 hashtag.',
