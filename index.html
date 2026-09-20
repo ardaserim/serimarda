@@ -355,7 +355,7 @@ textarea.memory-box{
     <div class="section-title">Tanı</div>
     <button class="small-btn" id="healthCheckBtn">🩺 Sistem Kontrolü</button>
     <div id="healthResult" style="margin-top:8px; font-size:11.5px;"></div>
-    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 28</p>
+    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 29</p>
   </aside>
 
   <main>
@@ -798,6 +798,11 @@ const PRESETS = [
   {id:'together', name:'Together AI', format:'openai', baseUrl:'https://api.together.xyz/v1/chat/completions', model:'meta-llama/Llama-3.3-70B-Instruct-Turbo', vision:false, free:false},
   {id:'fireworks', name:'Fireworks AI', format:'openai', baseUrl:'https://api.fireworks.ai/inference/v1/chat/completions', model:'accounts/fireworks/models/llama-v3p1-70b-instruct', vision:false, free:false},
   {id:'yandex', name:'YandexGPT', format:'yandex', baseUrl:'https://llm.api.cloud.yandex.net/foundationModels/v1/completion', model:'yandexgpt', vision:false, free:false},
+  // --- yerel (kendi bilgisayarında çalışan, ücretsiz ve internetsiz) ---
+  {id:'ollama', name:'Ollama (yerel)', format:'openai', baseUrl:'http://localhost:11434/v1/chat/completions', model:'llama3.1', vision:false, free:true, local:true},
+  {id:'lmstudio', name:'LM Studio (yerel)', format:'openai', baseUrl:'http://localhost:1234/v1/chat/completions', model:'local-model', vision:false, free:true, local:true},
+  {id:'gpt4all', name:'GPT4All (yerel)', format:'openai', baseUrl:'http://localhost:4891/v1/chat/completions', model:'local-model', vision:false, free:true, local:true},
+  {id:'jan', name:'Jan (yerel)', format:'openai', baseUrl:'http://localhost:1337/v1/chat/completions', model:'local-model', vision:false, free:true, local:true},
 ];
 
 const ORCH_SYSTEM_PROMPT = `Sen bir AI orkestratörüsün. Görevin, kullanıcı isteğini analiz edip en doğru eylemi seçmek ve SADECE geçerli JSON döndürmek.
@@ -1007,13 +1012,15 @@ async function fetchModelsFor(p){
 function renderProviders(){
   const list = document.getElementById('providerList');
   list.innerHTML = '';
-  const freeIdx = providers.map((p,i)=>i).filter(i => providers[i].free && !providers[i].custom);
+  const freeIdx = providers.map((p,i)=>i).filter(i => providers[i].free && !providers[i].custom && !providers[i].local);
   const paidIdx = providers.map((p,i)=>i).filter(i => !providers[i].free && !providers[i].custom);
+  const localIdx = providers.map((p,i)=>i).filter(i => providers[i].local && !providers[i].custom);
   const customIdx = providers.map((p,i)=>i).filter(i => providers[i].custom);
 
   const groups = [
     {label:'Ücretsiz başlayanlar', idxs:freeIdx},
     {label:'Ödeme yöntemi gerektirenler', idxs:paidIdx},
+    {label:'Yerel (bilgisayarında çalışan, uygulama açık olmalı)', idxs:localIdx},
   ];
   if(customIdx.length) groups.push({label:'Eklediklerim', idxs:customIdx});
 
