@@ -806,7 +806,7 @@ const PRESETS = [
   {id:'fireworks', name:'Fireworks AI', format:'openai', baseUrl:'https://api.fireworks.ai/inference/v1/chat/completions', model:'accounts/fireworks/models/llama-v3p1-70b-instruct', vision:false, free:false},
   {id:'yandex', name:'YandexGPT', format:'yandex', baseUrl:'https://llm.api.cloud.yandex.net/foundationModels/v1/completion', model:'yandexgpt', vision:false, free:false},
   // --- yerel (kendi bilgisayarında çalışan, ücretsiz ve internetsiz) ---
-  {id:'ollama', name:'Ollama (yerel)', format:'openai', baseUrl:'http://localhost:11434/v1/chat/completions', model:'llama3.1', vision:false, free:true, local:true},
+  {id:'ollama', name:'Ollama (yerel)', format:'openai', baseUrl:'http://localhost:11434/v1/chat/completions', model:'qwen2.5-coder:7b', vision:false, free:true, local:true},
   {id:'lmstudio', name:'LM Studio (yerel)', format:'openai', baseUrl:'http://localhost:1234/v1/chat/completions', model:'local-model', vision:false, free:true, local:true},
   {id:'gpt4all', name:'GPT4All (yerel)', format:'openai', baseUrl:'http://localhost:4891/v1/chat/completions', model:'local-model', vision:false, free:true, local:true},
   {id:'jan', name:'Jan (yerel)', format:'openai', baseUrl:'http://localhost:1337/v1/chat/completions', model:'local-model', vision:false, free:true, local:true},
@@ -1001,7 +1001,7 @@ function providerCardHtml(p, idx){
 async function fetchModelsFor(p){
   if(p.format === 'openai'){
     const modelsUrl = p.baseUrl.replace(/\/chat\/completions.*$/, '/models');
-    const res = await fetch(modelsUrl, {headers:{'Authorization':'Bearer '+p.key}});
+    const res = await fetch(modelsUrl, p.id === 'ollama' ? {} : {headers:{'Authorization':'Bearer '+p.key}});
     const data = await res.json();
     if(!res.ok) throw new Error(extractApiError(data, res));
     return (data.data || []).map(m => m.id).sort();
@@ -1058,7 +1058,7 @@ function renderProviders(){
     btn.addEventListener('click', async () => {
       const idx = +btn.dataset.idx;
       const p = providers[idx];
-      if(!p.key){ addSysNote('Önce bu sağlayıcının API anahtarını gir.', true); return; }
+      if(p.id !== 'ollama' && !p.key){ addSysNote('Önce bu sağlayıcının API anahtarını gir.', true); return; }
       const originalLabel = btn.textContent;
       btn.textContent = 'Getiriliyor...'; btn.disabled = true;
       try{
@@ -1374,7 +1374,7 @@ async function callProvider(p, systemPrompt, userText, imageDataUrl, history, on
         try{
           const res = await fetch(p.baseUrl, {
             method:'POST',
-            headers:{'Content-Type':'application/json','Authorization':'Bearer '+p.key},
+            headers: p.id === 'ollama' ? {'Content-Type':'application/json'} : {'Content-Type':'application/json','Authorization':'Bearer '+p.key},
             body: JSON.stringify({model: p.model, max_tokens: maxTokensOverride || 1200, stream:true, messages})
           });
           if(!res.ok || !res.body){
@@ -1409,7 +1409,7 @@ async function callProvider(p, systemPrompt, userText, imageDataUrl, history, on
       }
       const res = await fetch(p.baseUrl, {
         method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+p.key},
+        headers: p.id === 'ollama' ? {'Content-Type':'application/json'} : {'Content-Type':'application/json','Authorization':'Bearer '+p.key},
         body: JSON.stringify({model: p.model, max_tokens: maxTokensOverride || 1200, messages})
       });
       const data = await res.json();
