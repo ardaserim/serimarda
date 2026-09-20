@@ -17,6 +17,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 :root{
@@ -354,7 +355,7 @@ textarea.memory-box{
     <div class="section-title">Tanı</div>
     <button class="small-btn" id="healthCheckBtn">🩺 Sistem Kontrolü</button>
     <div id="healthResult" style="margin-top:8px; font-size:11.5px;"></div>
-    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 25</p>
+    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 26</p>
   </aside>
 
   <main>
@@ -533,6 +534,24 @@ textarea.memory-box{
           <button class="small-btn" id="legalContactAddBtn" style="max-width:220px; border-color:var(--accent); color:var(--accent);">+ Yeni danışman</button>
           <div id="legalContactList" style="margin-top:12px; display:flex; flex-direction:column; gap:8px;"></div>
 
+          <div class="section-title" style="margin-top:36px;">📎 PDF Araçları</div>
+          <p style="font-size:12.5px;color:var(--text-muted);margin:0 0 10px;">Tamamen tarayıcında çalışır, dosyalar hiçbir yere gitmez.</p>
+          <div style="font-size:12.5px; color:var(--text); font-weight:600; margin-bottom:6px;">Birleştir</div>
+          <input type="file" id="pdfMergeInput" accept=".pdf" multiple style="display:none;">
+          <button class="small-btn" id="pdfMergeSelectBtn" style="border-color:var(--accent); color:var(--accent);">+ PDF dosyaları seç (sırayla eklenir)</button>
+          <div id="pdfMergeList" style="margin-top:8px; display:flex; flex-direction:column; gap:4px;"></div>
+          <button id="pdfMergeRunBtn" style="width:100%; margin-top:8px; padding:10px; border-radius:6px; border:none; background:var(--accent); color:#16171A; font-weight:600; font-size:13px; cursor:pointer;">Birleştir ve indir</button>
+
+          <div style="font-size:12.5px; color:var(--text); font-weight:600; margin:20px 0 6px;">Sayfa Aralığı Çıkar</div>
+          <input type="file" id="pdfSplitInput" accept=".pdf" style="display:none;">
+          <button class="small-btn" id="pdfSplitSelectBtn" style="border-color:var(--accent); color:var(--accent);">+ PDF seç</button>
+          <div id="pdfSplitInfo" style="font-size:12px; color:var(--text-muted); margin-top:6px;"></div>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <input id="pdfSplitFrom" type="number" min="1" placeholder="Başlangıç sayfa" style="flex:1; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:12.5px;">
+            <input id="pdfSplitTo" type="number" min="1" placeholder="Bitiş sayfa" style="flex:1; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:12.5px;">
+          </div>
+          <button id="pdfSplitRunBtn" style="width:100%; margin-top:8px; padding:10px; border-radius:6px; border:1px solid var(--accent); background:none; color:var(--accent); font-weight:600; font-size:13px; cursor:pointer;">Çıkar ve indir</button>
+
           <div class="section-title" style="margin-top:36px;">Belge Şablonları</div>
           <p style="font-size:12.5px;color:var(--text-muted);margin:0 0 14px;">Bir şablon seç ya da "Diğer" ile ne istediğini serbestçe yaz — SGK, vergi dairesi, mevzuat atıflı yazışmalar dahil her şeyi kapsar.</p>
           <select id="docTemplateSelect" style="width:100%; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:12.5px; font-family:inherit;">
@@ -621,8 +640,8 @@ textarea.memory-box{
           </select>
           <div class="field" style="margin-top:10px;"><label>Format</label></div>
           <select id="contentFormat" style="width:100%; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:12.5px; font-family:inherit;">
-            <option value="LinkedIn">LinkedIn</option>
             <option value="Makale">Makale (tam yazı)</option>
+            <option value="LinkedIn">LinkedIn</option>
             <option value="Instagram">Instagram</option>
             <option value="X (Twitter)">X (Twitter)</option>
             <option value="Blog yazısı">Blog</option>
@@ -698,6 +717,7 @@ textarea.memory-box{
             <button class="mode-btn fun-tab" data-fun="memory">Hafıza Kartları</button>
             <button class="mode-btn fun-tab" data-fun="rps">Taş-Kağıt-Makas</button>
             <button class="mode-btn fun-tab" data-fun="quiz">Bilgi Yarışması</button>
+            <button class="mode-btn fun-tab" data-fun="debate">🗣️ AI Tartışması</button>
           </div>
 
           <div id="funTtt" style="margin-top:18px;">
@@ -728,6 +748,23 @@ textarea.memory-box{
             <button id="quizStartBtn" style="width:100%; margin-top:10px; padding:10px; border-radius:6px; border:none; background:var(--accent); color:#16171A; font-weight:600; font-size:13px; cursor:pointer;">Soru getir</button>
             <div id="quizBox" style="margin-top:16px;"></div>
             <p style="font-size:12px; color:var(--text-muted); margin-top:10px;">Skor: <span id="quizScore">0</span></p>
+          </div>
+          <div id="funDebate" style="margin-top:18px; display:none;">
+            <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:10px;">İki bağlı model bir konuda karşılıklı tartışır — sen de araya girip söz söyleyebilirsin.</p>
+            <input id="debateTopic" class="memory-box" style="min-height:auto; padding:8px;" placeholder="Tartışma konusu — örn: uzaktan çalışma ofis çalışmasından daha verimlidir">
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <select id="debateProviderA" style="flex:1; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:12px;"></select>
+              <select id="debateProviderB" style="flex:1; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:12px;"></select>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <button id="debateStartBtn" style="flex:1; padding:10px; border-radius:6px; border:none; background:var(--accent); color:#16171A; font-weight:600; font-size:13px; cursor:pointer;">Başlat</button>
+              <button id="debateStopBtn" style="flex:1; padding:10px; border-radius:6px; border:1px solid var(--border); background:none; color:var(--text-muted); font-weight:600; font-size:13px; cursor:pointer;" disabled>Durdur</button>
+            </div>
+            <div id="debateBox" style="margin-top:16px; display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto;"></div>
+            <div id="debateUserRow" style="display:none; gap:8px; margin-top:10px;">
+              <input id="debateUserInput" placeholder="Araya gir, bir şey söyle..." style="flex:1; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:9px; border-radius:6px; font-size:13px;">
+              <button id="debateUserSendBtn" style="width:auto; padding:9px 16px; border-radius:6px; border:none; background:var(--accent); color:#16171A; font-weight:600; cursor:pointer;">Söyle</button>
+            </div>
           </div>
         </div>
       </div>
@@ -2289,7 +2326,7 @@ document.getElementById('contentGenerateBtn').addEventListener('click', async ()
     }
   }
   const formatRules = {
-    'Makale': 'Tam, yayına hazır bir MAKALE — en az 1000, en fazla 1000000 kelime. Giriş, gelişme (alt başlıklarla bölünmüş) ve sonuç bölümleri olsun, yüzeysel geçme, konuyu gerçekten işle, somut örnekler ver. Yazının EN SONUNA mutlaka şunu ekle: "🔑 Anahtar Kelimeler: " başlığı altında konuyla en ilgili 6-10 SEO anahtar kelimesi (virgülle ayrılmış), ardından "Etiketler:" başlığı altında 5-8 hashtag.',
+    'Makale': 'Tam, yayına hazır bir MAKALE — en az 700, en fazla 1000 kelime. Giriş, gelişme (alt başlıklarla bölünmüş) ve sonuç bölümleri olsun, yüzeysel geçme, konuyu gerçekten işle, somut örnekler ver. Yazının EN SONUNA mutlaka şunu ekle: "🔑 Anahtar Kelimeler: " başlığı altında konuyla en ilgili 6-10 SEO anahtar kelimesi (virgülle ayrılmış), ardından "Etiketler:" başlığı altında 5-8 hashtag.',
     'LinkedIn': 'LinkedIn\'de okunması kolay kısa paragraflar, en az 150 en fazla 250 kelime, sonunda 5-8 ilgili hashtag.',
     'Instagram': 'Instagram paylaşımı gibi enerjik, kısa cümleler, emoji kullanımı ölçülü, sonunda 8-15 hashtag.',
     'X (Twitter)': 'X (Twitter) için tek bir gönderi, en fazla 280 karakter, vurucu ve net, sonunda 2-3 hashtag.',
@@ -2479,6 +2516,7 @@ document.querySelectorAll('.fun-tab').forEach(b => b.addEventListener('click', (
   document.getElementById('funMemory').style.display = which === 'memory' ? 'block' : 'none';
   document.getElementById('funRps').style.display = which === 'rps' ? 'block' : 'none';
   document.getElementById('funQuiz').style.display = which === 'quiz' ? 'block' : 'none';
+  document.getElementById('funDebate').style.display = which === 'debate' ? 'block' : 'none';
 }));
 
 /* ---------------- X-O (Tic-Tac-Toe) ---------------- */
@@ -2611,6 +2649,85 @@ document.getElementById('quizStartBtn').addEventListener('click', async () => {
     optWrap.appendChild(b);
   });
 });
+
+/* ---------------- AI'lar Arası Tartışma ---------------- */
+let debateActive = false;
+let debateLog = [];
+let debateTopic = '';
+let debateNextSide = 'A';
+let debatePendingUserMsg = null;
+function populateDebateSelects(){
+  const active = providers.filter(p => p.enabled && p.key);
+  const optionsHtml = active.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  const selA = document.getElementById('debateProviderA');
+  const selB = document.getElementById('debateProviderB');
+  selA.innerHTML = optionsHtml; selB.innerHTML = optionsHtml;
+  if(active.length > 1) selB.selectedIndex = 1;
+}
+document.querySelector('.navitem[data-tab="fun"]').addEventListener('click', populateDebateSelects);
+document.getElementById('debateStartBtn').addEventListener('click', async () => {
+  syncProvidersFromDOM();
+  debateTopic = document.getElementById('debateTopic').value.trim();
+  if(!debateTopic){ addSysNote('Önce bir tartışma konusu yaz.', true); return; }
+  const active = providers.filter(p => p.enabled && p.key);
+  if(active.length < 2){ addSysNote('Tartışma için en az 2 bağlı model gerekiyor.', true); return; }
+  debateLog = [];
+  debateActive = true;
+  debateNextSide = 'A';
+  document.getElementById('debateBox').innerHTML = '';
+  document.getElementById('debateUserRow').style.display = 'flex';
+  document.getElementById('debateStartBtn').disabled = true;
+  document.getElementById('debateStopBtn').disabled = false;
+  runDebateRound();
+});
+document.getElementById('debateStopBtn').addEventListener('click', () => {
+  debateActive = false;
+  document.getElementById('debateStartBtn').disabled = false;
+  document.getElementById('debateStopBtn').disabled = true;
+});
+document.getElementById('debateUserSendBtn').addEventListener('click', () => {
+  const inp = document.getElementById('debateUserInput');
+  const text = inp.value.trim();
+  if(!text) return;
+  debateLog.push({label:'Sen', text});
+  addDebateBubble('Sen', text);
+  debatePendingUserMsg = text;
+  inp.value = '';
+});
+function addDebateBubble(label, text){
+  const box = document.getElementById('debateBox');
+  const isUser = label === 'Sen';
+  const row = document.createElement('div');
+  row.style.cssText = `align-self:${isUser?'flex-end':'flex-start'}; max-width:85%; background:${isUser?'var(--accent)':'var(--surface-2)'}; color:${isUser?'#16171A':'var(--text)'}; padding:10px 14px; border-radius:12px;`;
+  row.innerHTML = `<div style="font-size:10.5px; font-weight:700; opacity:.7; margin-bottom:3px;">${label}</div><div style="font-size:13px; white-space:pre-wrap;">${text}</div>`;
+  box.appendChild(row);
+  box.scrollTop = box.scrollHeight;
+  return row;
+}
+async function runDebateRound(){
+  if(!debateActive) return;
+  const providerId = debateNextSide === 'A' ? document.getElementById('debateProviderA').value : document.getElementById('debateProviderB').value;
+  const provider = providers.find(p => p.id === providerId);
+  const sideLabel = debateNextSide === 'A' ? 'Taraf A' : 'Taraf B';
+  const loadingRow = addDebateBubble(sideLabel, '…');
+  const transcript = debateLog.map(e => `${e.label}: ${e.text}`).join('\n') || '(henüz kimse konuşmadı)';
+  const sysPrompt = `Sen bir tartışma katılımcısısın. Konu: "${debateTopic}". Sen ${sideLabel === 'Taraf A' ? 'A tarafını (destekleyen görüşü)' : 'B tarafını (eleştiren/karşı görüşü)'} savunuyorsun. Karşı tarafın söylediklerine gerçekten cevap ver, tekrar etme, saygılı ama net ol. Kullanıcı ("Sen" olarak işaretli) araya girdiyse ona doğrudan hitap et. Cevabın 2-4 cümle, doğal bir konuşma dili olsun.`;
+  const result = await callProviderSmart(provider, sysPrompt, `Şimdiye kadarki tartışma:\n${transcript}\n\nSıra sende, cevap ver.`);
+  loadingRow.remove();
+  if(!debateActive) return;
+  if(!result.ok){
+    addDebateBubble(sideLabel, '(cevap alınamadı: ' + result.error + ')');
+    debateActive = false;
+    document.getElementById('debateStartBtn').disabled = false;
+    document.getElementById('debateStopBtn').disabled = true;
+    return;
+  }
+  debateLog.push({label: sideLabel, text: result.text});
+  addDebateBubble(sideLabel, result.text);
+  speakText(result.text);
+  debateNextSide = debateNextSide === 'A' ? 'B' : 'A';
+  setTimeout(runDebateRound, 2500);
+}
 
 /* ---------------- Namespaced depolama yardımcıları ---------------- */
 function nsGet(key, def){ try{ const v = JSON.parse(localStorage.getItem(key)); return v === null || v === undefined ? def : v; }catch(e){ return def; } }
@@ -3102,6 +3219,81 @@ function renderLegalContacts(){
 }
 renderLegalContacts();
 
+/* ---------------- PDF Araçları ---------------- */
+let pdfMergeFiles = [];
+document.getElementById('pdfMergeSelectBtn').addEventListener('click', () => document.getElementById('pdfMergeInput').click());
+document.getElementById('pdfMergeInput').addEventListener('change', () => {
+  pdfMergeFiles = pdfMergeFiles.concat(Array.from(document.getElementById('pdfMergeInput').files));
+  renderPdfMergeList();
+  document.getElementById('pdfMergeInput').value = '';
+});
+function renderPdfMergeList(){
+  const box = document.getElementById('pdfMergeList');
+  box.innerHTML = '';
+  pdfMergeFiles.forEach((f,i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-muted); background:var(--surface-2); padding:6px 8px; border-radius:6px;';
+    row.innerHTML = `<span style="flex:1;">${i+1}. ${f.name}</span><button style="width:auto;padding:3px 8px;">✕</button>`;
+    row.querySelector('button').onclick = () => { pdfMergeFiles.splice(i,1); renderPdfMergeList(); };
+    box.appendChild(row);
+  });
+}
+document.getElementById('pdfMergeRunBtn').addEventListener('click', async () => {
+  if(pdfMergeFiles.length < 2){ addSysNote('En az 2 PDF seçmen gerekiyor.', true); return; }
+  if(!window.PDFLib){ addSysNote('PDF kütüphanesi yüklenemedi, internet bağlantını kontrol et.', true); return; }
+  try{
+    const { PDFDocument } = window.PDFLib;
+    const merged = await PDFDocument.create();
+    for(const f of pdfMergeFiles){
+      const bytes = await f.arrayBuffer();
+      const src = await PDFDocument.load(bytes);
+      const pages = await merged.copyPages(src, src.getPageIndices());
+      pages.forEach(p => merged.addPage(p));
+    }
+    const outBytes = await merged.save();
+    const dataUrl = 'data:application/pdf;base64,' + arrayBufferToBase64(outBytes);
+    const filename = 'birlestirilmis-' + Date.now() + '.pdf';
+    downloadFile(filename, outBytes, 'application/pdf');
+    saveToLibrary(filename, 'application/pdf', dataUrl);
+    addSysNote(`${pdfMergeFiles.length} PDF birleştirildi ve indirildi.`);
+    pdfMergeFiles = []; renderPdfMergeList();
+  }catch(err){ addSysNote('Birleştirilemedi: ' + err.message, true); }
+});
+let pdfSplitFile = null;
+document.getElementById('pdfSplitSelectBtn').addEventListener('click', () => document.getElementById('pdfSplitInput').click());
+document.getElementById('pdfSplitInput').addEventListener('change', async () => {
+  pdfSplitFile = document.getElementById('pdfSplitInput').files[0];
+  if(!pdfSplitFile) return;
+  try{
+    const bytes = await pdfSplitFile.arrayBuffer();
+    const doc = await window.PDFLib.PDFDocument.load(bytes);
+    document.getElementById('pdfSplitInfo').textContent = `${pdfSplitFile.name} — toplam ${doc.getPageCount()} sayfa.`;
+  }catch(err){ document.getElementById('pdfSplitInfo').textContent = 'Dosya okunamadı: ' + err.message; }
+});
+document.getElementById('pdfSplitRunBtn').addEventListener('click', async () => {
+  if(!pdfSplitFile){ addSysNote('Önce bir PDF seç.', true); return; }
+  const from = parseInt(document.getElementById('pdfSplitFrom').value, 10);
+  const to = parseInt(document.getElementById('pdfSplitTo').value, 10);
+  if(!from || !to || to < from){ addSysNote('Geçerli bir sayfa aralığı gir.', true); return; }
+  try{
+    const { PDFDocument } = window.PDFLib;
+    const bytes = await pdfSplitFile.arrayBuffer();
+    const src = await PDFDocument.load(bytes);
+    const total = src.getPageCount();
+    if(from > total || to > total){ addSysNote(`Bu belgede sadece ${total} sayfa var.`, true); return; }
+    const out = await PDFDocument.create();
+    const indices = []; for(let i=from-1; i<=to-1; i++) indices.push(i);
+    const pages = await out.copyPages(src, indices);
+    pages.forEach(p => out.addPage(p));
+    const outBytes = await out.save();
+    const dataUrl = 'data:application/pdf;base64,' + arrayBufferToBase64(outBytes);
+    const filename = `sayfa-${from}-${to}-${Date.now()}.pdf`;
+    downloadFile(filename, outBytes, 'application/pdf');
+    saveToLibrary(filename, 'application/pdf', dataUrl);
+    addSysNote(`Sayfa ${from}-${to} çıkarıldı ve indirildi.`);
+  }catch(err){ addSysNote('Çıkarılamadı: ' + err.message, true); }
+});
+
 /* ---------------- Disiplin Danışmanı ---------------- */
 const DISCIPLINE_SYSTEM_PROMPT = `Sen dikkatli bir İK/iş hukuku danışmanısın. Sana bir olay ve varsa gerçek internet arama sonuçları verilecek.
 
@@ -3587,7 +3779,10 @@ loadSyncConfig();
 <div id="quickNoteOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:50; align-items:center; justify-content:center;">
   <div style="width:90%; max-width:420px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px;">
     <div class="section-title" style="margin-top:0;">Hızlı Not</div>
-    <textarea id="quickNoteText" class="memory-box" style="min-height:100px;" placeholder="Aklından ne geçiyorsa..."></textarea>
+    <div style="display:flex; gap:8px; align-items:flex-start;">
+      <textarea id="quickNoteText" class="memory-box" style="min-height:100px; flex:1;" placeholder="Aklından ne geçiyorsa..."></textarea>
+      <button class="round-btn" id="quickNoteMicBtn" title="Basılı tut, konuş" style="flex-shrink:0;">🎤</button>
+    </div>
     <select id="quickNoteCategory" style="width:100%; margin-top:8px; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:12.5px;">
       <option>Fikir</option><option>Görev</option><option>Link</option><option>Alıntı</option>
     </select>
@@ -3669,7 +3864,46 @@ document.getElementById('quickNoteSaveBtn').addEventListener('click', () => {
   nsSet('serimarda.notes', notes);
   document.getElementById('quickNoteText').value = '';
   renderRecentNotes();
+  detectTaskInNote(text);
 });
+let qnRecognizer = null, qnListening = false;
+if(SpeechRec){
+  qnRecognizer = new SpeechRec();
+  qnRecognizer.lang = 'tr-TR'; qnRecognizer.interimResults = false; qnRecognizer.continuous = false;
+  qnRecognizer.onresult = (e) => {
+    const said = e.results[0][0].transcript;
+    const box = document.getElementById('quickNoteText');
+    box.value = (box.value ? box.value + ' ' : '') + said;
+  };
+  qnRecognizer.onend = () => { qnListening = false; document.getElementById('quickNoteMicBtn').style.background = ''; };
+  qnRecognizer.onerror = () => { qnListening = false; document.getElementById('quickNoteMicBtn').style.background = ''; };
+}
+const quickNoteMicBtn = document.getElementById('quickNoteMicBtn');
+function qnStart(){ if(!qnRecognizer || qnListening) return; qnListening = true; quickNoteMicBtn.style.background = 'var(--accent)'; try{ qnRecognizer.start(); }catch(e){} }
+function qnStop(){ if(!qnRecognizer || !qnListening) return; qnRecognizer.stop(); }
+quickNoteMicBtn.addEventListener('mousedown', qnStart);
+quickNoteMicBtn.addEventListener('touchstart', (e) => { e.preventDefault(); qnStart(); }, {passive:false});
+quickNoteMicBtn.addEventListener('mouseup', qnStop);
+quickNoteMicBtn.addEventListener('mouseleave', qnStop);
+quickNoteMicBtn.addEventListener('touchend', qnStop);
+async function detectTaskInNote(text){
+  const anyP = providers.find(p => p.enabled && p.key);
+  if(!anyP) return;
+  const todayStr = new Date().toISOString().slice(0,10);
+  const r = await callProvider(anyP, `Bugünün tarihi ${todayStr}. Sana bir not verilecek. Bu not bir görev/hatırlatma/randevu içeriyor mu, karar ver. İçeriyorsa başlığını ve tarihini (varsa, YYYY-MM-DD formatında, "yarın"/"pazartesi" gibi ifadeleri bugünün tarihine göre hesapla) çıkar. SADECE şu JSON formatında cevap ver, başka hiçbir şey yazma: {"gorev":true veya false, "baslik":"...", "tarih":"YYYY-MM-DD veya null"}`, text);
+  if(!r.ok) return;
+  let parsed;
+  try{ parsed = JSON.parse(r.text.replace(/```json|```/g,'').trim()); }catch(e){ return; }
+  if(!parsed.gorev || !parsed.baslik) return;
+  if(!confirm(`Bu not bir görev gibi görünüyor: "${parsed.baslik}"${parsed.tarih ? ' — ' + parsed.tarih : ''}\n\nGörevlere eklemek ister misin?`)) return;
+  const tasks = nsGet('serimarda.tasks', []);
+  tasks.push({id:Date.now()+'', title: parsed.baslik, due: parsed.tarih || null, done:false});
+  nsSet('serimarda.tasks', tasks);
+  if(typeof renderTasks === 'function') renderTasks();
+  if(typeof renderNotifications === 'function') renderNotifications();
+  addSysNote('Görevlere eklendi: ' + parsed.baslik);
+}
+
 function renderRecentNotes(){
   const notes = nsGet('serimarda.notes', []).slice(0,8);
   const box = document.getElementById('quickNoteRecent');
