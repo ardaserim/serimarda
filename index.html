@@ -268,8 +268,7 @@ textarea.memory-box{
   <nav class="navrail" id="navrail">
     <div class="navitem active" data-tab="chat"><span class="navicon">💬</span>Sohbet</div>
     <div class="navitem" data-tab="files"><span class="navicon">📁</span>Dosyalar</div>
-    <div class="navitem" data-tab="jobs"><span class="navicon">🔎</span>İlanlar</div>
-    <div class="navitem" data-tab="apps"><span class="navicon">📋</span>Başvuru</div>
+    <div class="navitem" data-tab="jobs"><span class="navicon">🔎</span>İş Arama</div>
     <div class="navitem" data-tab="tasks"><span class="navicon">✅</span>Görevler</div>
     <div class="navitem" data-tab="price"><span class="navicon">💱</span>Fiyat</div>
     <div class="navitem" data-tab="news"><span class="navicon">📰</span>Gündem</div>
@@ -277,6 +276,7 @@ textarea.memory-box{
     <div class="navitem" data-tab="image"><span class="navicon">🎨</span>Görsel</div>
     <div class="navitem" data-tab="translate"><span class="navicon">🌐</span>Çeviri</div>
     <div class="navitem" data-tab="fun"><span class="navicon">🎮</span>Eğlence</div>
+    <div class="navitem" data-tab="debate"><span class="navicon">🗣️</span>AI Tartışması</div>
     <div class="navitem" data-tab="docs"><span class="navicon">📄</span>Belgeler</div>
   </nav>
   <aside id="sidebar">
@@ -355,7 +355,7 @@ textarea.memory-box{
     <div class="section-title">Tanı</div>
     <button class="small-btn" id="healthCheckBtn">🩺 Sistem Kontrolü</button>
     <div id="healthResult" style="margin-top:8px; font-size:11.5px;"></div>
-    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 33</p>
+    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 35</p>
   </aside>
 
   <main>
@@ -410,8 +410,8 @@ textarea.memory-box{
     <div class="panel" id="panel-jobs" hidden>
       <div class="chat-scroll">
         <div class="files-wrap">
-          <div class="section-title" style="margin-top:0;">İş İlanları</div>
-          <p style="font-size:12.5px;color:var(--text-muted);margin:0 0 14px;">Perplexity ile interneti aratabilir, ya da Kariyer.net / LinkedIn iş alarmı maillerinden kopyaladığın metni yapıştırabilirsin — ikisi de CV'ne göre puanlayıp sıralar. Bir ilana başvurmak istediğinde "Bu firmaya yaz" ile Sohbet'e geçip o firma için başvuru mesajı hazırlar.</p>
+          <div class="section-title" style="margin-top:0;">İş Arama & Başvurular</div>
+          <p style="font-size:12.5px;color:var(--text-muted);margin:0 0 14px;">Artık etkin olan tüm modeller birlikte çalışıp sonucu doğruluyor. İnterneti aratabilir, ya da Kariyer.net / LinkedIn iş alarmı maillerinden kopyaladığın metni yapıştırabilirsin — ikisi de CV'ne göre puanlayıp sıralar. Bir ilana başvurmak istediğinde "Bu firmaya yaz" ile Sohbet'e geçip o firma için başvuru mesajı hazırlar, aşağıdan takip edebilirsin.</p>
 
           <div class="field"><label>CV metnin (bir kere yapıştır, hatırlanır)</label></div>
           <textarea id="jobCvText" class="memory-box" style="min-height:90px;" placeholder="Deneyim, unvan, beceriler... (veya aşağıdan bir PDF CV seç)"></textarea>
@@ -434,14 +434,8 @@ textarea.memory-box{
           <button id="jobAnalyzeBtn" style="width:100%; margin-top:10px; padding:10px; border-radius:6px; border:none; background:var(--accent); color:#16171A; font-weight:600; font-size:13px; cursor:pointer;">İlanları CV'ye göre sırala</button>
 
           <div id="jobResults" style="margin-top:18px; display:flex; flex-direction:column; gap:10px;"></div>
-        </div>
-      </div>
-    </div>
 
-    <div class="panel" id="panel-apps" hidden>
-      <div class="chat-scroll">
-        <div class="files-wrap">
-          <div class="section-title" style="margin-top:0;">Başvuru Takibi</div>
+          <div class="section-title" style="margin-top:36px;">Başvurularım</div>
           <p style="font-size:12.5px;color:var(--text-muted);margin:0 0 10px;">Hangi firmaya, hangi aşamada olduğunu takip et.</p>
           <button class="small-btn" id="appAddBtn" style="max-width:220px; border-color:var(--accent); color:var(--accent);">+ Yeni başvuru</button>
           <div id="appList" style="margin-top:14px; display:flex; flex-direction:column; gap:8px;"></div>
@@ -710,14 +704,13 @@ textarea.memory-box{
       <div class="chat-scroll">
         <div class="files-wrap">
           <div class="section-title" style="margin-top:0;">🎮 Eğlence</div>
-          <p style="font-size:12.5px;color:var(--text-muted);margin:0 0 16px;">İlk üçü tamamen cihazında çalışır, hiçbir internet bağlantısı ya da API gerektirmez — hiçbir kısıtlamaya takılmaz.</p>
+          <p style="font-size:12.5px;color:var(--text-muted);margin:0 0 16px;">İlk üçü tamamen cihazında çalışır, hiçbir internet bağlantısı ya da API gerektirmez. Bilgi Yarışması ise bağlı bir model kullanıyor.</p>
 
           <div class="mode-row">
             <button class="mode-btn fun-tab active" data-fun="ttt">X-O</button>
             <button class="mode-btn fun-tab" data-fun="memory">Hafıza Kartları</button>
             <button class="mode-btn fun-tab" data-fun="rps">Taş-Kağıt-Makas</button>
             <button class="mode-btn fun-tab" data-fun="quiz">Bilgi Yarışması</button>
-            <button class="mode-btn fun-tab" data-fun="debate">🗣️ AI Tartışması</button>
           </div>
 
           <div id="funTtt" style="margin-top:18px;">
@@ -749,29 +742,35 @@ textarea.memory-box{
             <div id="quizBox" style="margin-top:16px;"></div>
             <p style="font-size:12px; color:var(--text-muted); margin-top:10px;">Skor: <span id="quizScore">0</span></p>
           </div>
-          <div id="funDebate" style="margin-top:18px; display:none;">
-            <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:10px;">Bağlı modeller bir konuda karşılıklı tartışır — sen de araya girip söz söyleyebilirsin.</p>
-            <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-muted); margin-bottom:8px; cursor:pointer;">
-              <input type="checkbox" id="debateCodeMode" style="cursor:pointer;"> 🧑‍💻 Kod tartışması modu — modeller bir kod parçasını tartışıp birlikte düzeltsin
-            </label>
-            <input id="debateTopic" class="memory-box" style="min-height:auto; padding:8px;" placeholder="Tartışma konusu — örn: uzaktan çalışma ofis çalışmasından daha verimlidir">
-            <div id="debateCodeWrap" style="display:none; margin-top:8px;">
-              <textarea id="debateCodeInput" class="memory-box" style="min-height:140px; font-family:'JetBrains Mono',monospace; font-size:12px;" placeholder="Tartışılacak/düzeltilecek kodu buraya yapıştır..."></textarea>
-            </div>
-            <div style="margin-top:8px; font-size:11.5px; color:var(--text-muted);" id="debateParticipantList"></div>
-            <div style="display:flex; gap:8px; margin-top:8px;">
-              <button id="debateStartBtn" style="flex:1; padding:10px; border-radius:6px; border:none; background:var(--accent); color:#16171A; font-weight:600; font-size:13px; cursor:pointer;">Başlat</button>
-              <button id="debateStopBtn" style="flex:1; padding:10px; border-radius:6px; border:1px solid var(--border); background:none; color:var(--text-muted); font-weight:600; font-size:13px; cursor:pointer;" disabled>Durdur</button>
-            </div>
-            <div id="debateBox" style="margin-top:16px; display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto;"></div>
-            <div id="debateUserRow" style="display:none; gap:8px; margin-top:10px;">
-              <input id="debateUserInput" placeholder="Araya gir, bir şey söyle..." style="flex:1; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:9px; border-radius:6px; font-size:13px;">
-              <button id="debateUserSendBtn" style="width:auto; padding:9px 16px; border-radius:6px; border:none; background:var(--accent); color:#16171A; font-weight:600; cursor:pointer;">Söyle</button>
-            </div>
-            <div id="debateCodeResultWrap" style="display:none; margin-top:14px;">
-              <button id="debateCodeFixBtn" style="width:100%; padding:10px; border-radius:6px; border:1px solid var(--accent); background:none; color:var(--accent); font-weight:600; font-size:13px; cursor:pointer;">✅ Tartışmaya göre kodu düzelt</button>
-              <div id="debateCodeResult" style="margin-top:12px;"></div>
-            </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-debate" hidden>
+      <div class="chat-scroll">
+        <div class="files-wrap">
+          <div class="section-title" style="margin-top:0;">🗣️ AI Tartışması</div>
+          <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:10px;">Bağlı modeller bir konuda karşılıklı tartışır — sen de araya girip söz söyleyebilirsin.</p>
+          <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-muted); margin-bottom:8px; cursor:pointer;">
+            <input type="checkbox" id="debateCodeMode" style="cursor:pointer;"> 🧑‍💻 Kod tartışması modu — modeller bir kod parçasını tartışıp birlikte düzeltsin
+          </label>
+          <input id="debateTopic" class="memory-box" style="min-height:auto; padding:8px;" placeholder="Tartışma konusu — örn: uzaktan çalışma ofis çalışmasından daha verimlidir">
+          <div id="debateCodeWrap" style="display:none; margin-top:8px;">
+            <textarea id="debateCodeInput" class="memory-box" style="min-height:140px; font-family:'JetBrains Mono',monospace; font-size:12px;" placeholder="Tartışılacak/düzeltilecek kodu buraya yapıştır..."></textarea>
+          </div>
+          <div style="margin-top:8px; font-size:11.5px; color:var(--text-muted);" id="debateParticipantList"></div>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button id="debateStartBtn" style="flex:1; padding:10px; border-radius:6px; border:none; background:var(--accent); color:#16171A; font-weight:600; font-size:13px; cursor:pointer;">Başlat</button>
+            <button id="debateStopBtn" style="flex:1; padding:10px; border-radius:6px; border:1px solid var(--border); background:none; color:var(--text-muted); font-weight:600; font-size:13px; cursor:pointer;" disabled>Durdur</button>
+          </div>
+          <div id="debateBox" style="margin-top:16px; display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto;"></div>
+          <div id="debateUserRow" style="display:none; gap:8px; margin-top:10px;">
+            <input id="debateUserInput" placeholder="Araya gir, bir şey söyle..." style="flex:1; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:9px; border-radius:6px; font-size:13px;">
+            <button id="debateUserSendBtn" style="width:auto; padding:9px 16px; border-radius:6px; border:none; background:var(--accent); color:#16171A; font-weight:600; cursor:pointer;">Söyle</button>
+          </div>
+          <div id="debateCodeResultWrap" style="display:none; margin-top:14px;">
+            <button id="debateCodeFixBtn" style="width:100%; padding:10px; border-radius:6px; border:1px solid var(--accent); background:none; color:var(--accent); font-weight:600; font-size:13px; cursor:pointer;">✅ Tartışmaya göre kodu düzelt</button>
+            <div id="debateCodeResult" style="margin-top:12px;"></div>
           </div>
         </div>
       </div>
@@ -966,12 +965,13 @@ document.querySelectorAll('.navitem').forEach(t => t.addEventListener('click', (
   document.getElementById('panel-image').hidden = which !== 'image';
   document.getElementById('panel-translate').hidden = which !== 'translate';
   document.getElementById('panel-fun').hidden = which !== 'fun';
-  document.getElementById('panel-apps').hidden = which !== 'apps';
+  document.getElementById('panel-debate').hidden = which !== 'debate';
+  if(which === 'debate') populateDebateParticipants();
   document.getElementById('panel-tasks').hidden = which !== 'tasks';
   document.getElementById('panel-price').hidden = which !== 'price';
   document.getElementById('panel-docs').hidden = which !== 'docs';
   if(which === 'files'){ renderFiles(); renderSentLog(); }
-  if(which === 'apps'){ renderApps(); renderCompanies(); }
+  if(which === 'jobs'){ renderApps(); renderCompanies(); }
   if(which === 'tasks'){ renderNotifications(); renderTasks(); renderPrompts(); }
   if(which === 'news'){ renderDashboard(); }
 }));
@@ -1337,7 +1337,7 @@ function splitDataUrl(dataUrl){
   const m = dataUrl.match(/^data:([^;]+);base64,(.*)$/s);
   return {mime: m ? m[1] : 'application/octet-stream', data: m ? m[2] : ''};
 }
-async function callProvider(p, systemPrompt, userText, imageDataUrl, history, onChunk){
+async function callProvider(p, systemPrompt, userText, imageDataUrl, history, onChunk, maxTokensOverride){
   try{
     if(p.format === 'openai'){
       let userContent = userText;
@@ -1352,7 +1352,7 @@ async function callProvider(p, systemPrompt, userText, imageDataUrl, history, on
           const res = await fetch(p.baseUrl, {
             method:'POST',
             headers:{'Content-Type':'application/json','Authorization':'Bearer '+p.key},
-            body: JSON.stringify({model: p.model, max_tokens: 1200, stream:true, messages})
+            body: JSON.stringify({model: p.model, max_tokens: maxTokensOverride || 1200, stream:true, messages})
           });
           if(!res.ok || !res.body){
             const data = await res.json().catch(()=>({}));
@@ -1387,7 +1387,7 @@ async function callProvider(p, systemPrompt, userText, imageDataUrl, history, on
       const res = await fetch(p.baseUrl, {
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+p.key},
-        body: JSON.stringify({model: p.model, max_tokens: 1200, messages})
+        body: JSON.stringify({model: p.model, max_tokens: maxTokensOverride || 1200, messages})
       });
       const data = await res.json();
       if(!res.ok) throw new Error(extractApiError(data, res));
@@ -1405,7 +1405,7 @@ async function callProvider(p, systemPrompt, userText, imageDataUrl, history, on
       const res = await fetch(p.baseUrl, {
         method:'POST',
         headers:{'Content-Type':'application/json','x-api-key':p.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-        body: JSON.stringify({model:p.model, max_tokens:1500, system:systemPrompt, messages})
+        body: JSON.stringify({model:p.model, max_tokens: maxTokensOverride || 1500, system:systemPrompt, messages})
       });
       const data = await res.json();
       if(!res.ok) throw new Error(extractApiError(data, res));
@@ -1423,7 +1423,7 @@ async function callProvider(p, systemPrompt, userText, imageDataUrl, history, on
       }
       contents.push({role:'user', parts});
       const url = `${p.baseUrl}/${p.model}:generateContent?key=${p.key}`;
-      const res = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({contents, generationConfig:{maxOutputTokens:1200}})});
+      const res = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({contents, generationConfig:{maxOutputTokens: maxTokensOverride || 1200}})});
       const data = await res.json();
       if(!res.ok) throw new Error(extractApiError(data, res));
       return {ok:true, text: data.candidates[0].content.parts[0].text};
@@ -1465,8 +1465,8 @@ function pickBestModel(ids, previousModel){
   }
   return finalPool[0];
 }
-async function callProviderSmart(p, systemPrompt, userText, imageDataUrl, history, onChunk){
-  const r = await callProvider(p, systemPrompt, userText, imageDataUrl, history, onChunk);
+async function callProviderSmart(p, systemPrompt, userText, imageDataUrl, history, onChunk, maxTokensOverride){
+  const r = await callProvider(p, systemPrompt, userText, imageDataUrl, history, onChunk, maxTokensOverride);
   if(r.ok) return r;
   const canList = p.format === 'openai' || p.format === 'anthropic' || p.format === 'gemini';
   if(!canList) return r;
@@ -1475,7 +1475,7 @@ async function callProviderSmart(p, systemPrompt, userText, imageDataUrl, histor
     if(!ids || ids.length === 0 || ids.includes(p.model)) return r;
     const newModel = pickBestModel(ids, p.model);
     if(!newModel || newModel === p.model) return r;
-    const retry = await callProvider({...p, model:newModel}, systemPrompt, userText, imageDataUrl, history, onChunk);
+    const retry = await callProvider({...p, model:newModel}, systemPrompt, userText, imageDataUrl, history, onChunk, maxTokensOverride);
     if(retry.ok){
       const idx = providers.findIndex(x => x.id === p.id);
       if(idx !== -1){
@@ -1547,7 +1547,7 @@ async function askCouncil(systemPrompt, userText, log, imageDataUrl, attemptsOut
   const numericWarning = numbersDiffer(successes);
   const compiled = successes.map(s => `--- ${s.name} ---\n${s.r.text}`).join('\n\n');
   log && log(`${referee.name} cevapları karşılaştırıp doğruluyor...`);
-  const verifyPrompt = `Aşağıda aynı soruya farklı yapay zekâ modellerinin verdiği cevaplar var. Bunları karşılaştır, çelişkileri belirt, hatalı olanı düzelt ve tek, net, doğrulanmış bir sonuç cevabı üret. Kaynak modelleri isimleriyle anma, sadece nihai cevabı ver.\n\nSoru: ${userText}\n\n${compiled}`;
+  const verifyPrompt = `Aşağıda aynı isteğe farklı yapay zekâ modellerinin verdiği cevaplar var. Bunları karşılaştır, çelişkileri belirt, hatalı olanı düzelt ve tek, net, doğrulanmış bir sonuç üret. ÇOK ÖNEMLİ: nihai cevabın orijinal talimattaki TÜM biçim kurallarına (uzunluk, hashtag, anahtar kelime, format, dil vb.) eksiksiz uymalı — cevapları birleştirirken bu kuralları asla atlama. Kaynak modelleri isimleriyle anma, sadece nihai cevabı ver.\n\nOrijinal talimat: ${systemPrompt}\n\nİstek: ${userText}\n\n${compiled}`;
   const refereeProvider = active.find(p => p.name === referee.name);
   const verified = await callProviderSmart(refereeProvider, 'Sen birden fazla AI cevabını karşılaştırıp doğrulayan bir hakemsin.', verifyPrompt);
   return {
@@ -2184,7 +2184,7 @@ document.getElementById('jobSearchBtn').addEventListener('click', async () => {
     if(!snippetText){ resultsBox.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">İnternette eşleşen ilan bulunamadı.</p>'; return; }
     const attempts = [];
     const promptText = `CV özeti:\n${cv || '(belirtilmedi)'}\n\nAranan pozisyon/kriterler: ${keywords || '(belirtilmedi)'}\nKonum: ${location || '(belirtilmedi)'}\n\nİnternet arama sonuçları:\n${snippetText}`;
-    const result = await askFast(JOB_EXTRACT_FROM_SNIPPETS_PROMPT, promptText, null, null, attempts);
+    const result = await askCouncil(JOB_EXTRACT_FROM_SNIPPETS_PROMPT, promptText, null, null, attempts);
     if(!result){ resultsBox.innerHTML = `<p style="font-size:12.5px;color:var(--danger);">Sonuçlar analiz edilemedi.${describeAttempts(attempts).replace(/\n/g,'<br>')}</p>`; return; }
     let jobs;
     try{ jobs = JSON.parse(result.text.replace(/```json|```/g,'').trim()); }
@@ -2218,9 +2218,7 @@ document.getElementById('jobAnalyzeBtn').addEventListener('click', async () => {
   resultsBox.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Analiz ediliyor...</p>';
   const attempts = [];
   const promptText = `CV özeti:\n${cv || '(belirtilmedi)'}\n\nKriterler: ${keywords || '(belirtilmedi)'}\n\nİlan metni:\n${listings}`;
-  const result = mode === 'council'
-    ? await askCouncil(JOB_MATCH_SYSTEM_PROMPT, promptText, null, null, attempts)
-    : await askFast(JOB_MATCH_SYSTEM_PROMPT, promptText, null, null, attempts);
+  const result = await askCouncil(JOB_MATCH_SYSTEM_PROMPT, promptText, null, null, attempts);
   if(!result){ resultsBox.innerHTML = `<p style="font-size:12.5px;color:var(--danger);">Analiz edilemedi.${describeAttempts(attempts).replace(/\n/g,'<br>')}</p>`; return; }
   let jobs;
   try{ jobs = JSON.parse(result.text.replace(/```json|```/g,'').trim()); }
@@ -2534,8 +2532,6 @@ document.querySelectorAll('.fun-tab').forEach(b => b.addEventListener('click', (
   document.getElementById('funMemory').style.display = which === 'memory' ? 'block' : 'none';
   document.getElementById('funRps').style.display = which === 'rps' ? 'block' : 'none';
   document.getElementById('funQuiz').style.display = which === 'quiz' ? 'block' : 'none';
-  document.getElementById('funDebate').style.display = which === 'debate' ? 'block' : 'none';
-  if(which === 'debate') populateDebateParticipants();
 }));
 
 /* ---------------- X-O (Tic-Tac-Toe) ---------------- */
@@ -2691,7 +2687,6 @@ function populateDebateParticipants(){
     ? `🪑 Masada otomatik olarak: ${active.map(p => p.name).join(', ')}`
     : 'Sol menüden en az 2 model bağla, otomatik masaya otursunlar.';
 }
-document.querySelector('.navitem[data-tab="fun"]').addEventListener('click', populateDebateParticipants);
 document.getElementById('debateStartBtn').addEventListener('click', async () => {
   syncProvidersFromDOM();
   debateTopic = document.getElementById('debateTopic').value.trim();
@@ -2772,13 +2767,14 @@ document.getElementById('debateUserInput').addEventListener('keydown', e => {
 });
 document.getElementById('debateCodeFixBtn').addEventListener('click', async () => {
   if(debateLog.length === 0){ addSysNote('Önce tartışmanın biraz ilerlemesini bekle.', true); return; }
+  if(debateOriginalCode.length > 20000){ addSysNote('Bu kod oldukça büyük (20.000+ karakter) — bazı modeller bunu tam okuyamayabilir ya da düzeltilmiş halini eksik/kesik döndürebilir. Küçük parçalar halinde denemen daha güvenilir sonuç verir.', true); }
   const box = document.getElementById('debateCodeResult');
   box.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Tartışmaya göre kod düzeltiliyor...</p>';
   const transcript = debateLog.map(e => `${e.label}: ${e.text}`).join('\n');
   const synthesizer = debateParticipants[0];
   const sysPrompt = `Sana orijinal bir kod ve o kod hakkında bir grup yazılımcının tartışmasının dökümü verilecek. Tartışmada bulunan gerçek sorunları ve önerileri koda uygula. SADECE düzeltilmiş, çalışır durumdaki tam kodu ver — açıklama, yorum satırı ekleme, markdown kod bloğu işareti (\`\`\`) koyma, sadece ham kod.`;
   const prompt = `Orijinal kod:\n${debateOriginalCode}\n\nTartışma:\n${transcript}\n\nDüzeltilmiş kodu ver.`;
-  const result = await callProviderSmart(synthesizer, sysPrompt, prompt);
+  const result = await callProviderSmart(synthesizer, sysPrompt, prompt, null, null, null, 8000);
   if(!result.ok){ box.innerHTML = `<p style="font-size:12.5px;color:var(--danger);">Düzeltilemedi: ${result.error}</p>`; return; }
   const cleaned = result.text.replace(/^```[a-z]*\n?/i, '').replace(/```$/,'').trim();
   box.innerHTML = `
