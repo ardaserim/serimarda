@@ -355,7 +355,7 @@ textarea.memory-box{
     <div class="section-title">Tanı</div>
     <button class="small-btn" id="healthCheckBtn">🩺 Sistem Kontrolü</button>
     <div id="healthResult" style="margin-top:8px; font-size:11.5px;"></div>
-    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 29</p>
+    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 30</p>
   </aside>
 
   <main>
@@ -860,7 +860,10 @@ function loadProviders(){
   const customOnes = saved.filter(s => !presetIds.has(s.id));
   providers = [...merged, ...customOnes];
 }
-function saveProviders(){ localStorage.setItem('orc_providers', JSON.stringify(providers)); }
+function saveProviders(){
+  localStorage.setItem('orc_providers', JSON.stringify(providers));
+  if(typeof populateDebateParticipants === 'function') populateDebateParticipants();
+}
 
 /* ---------------- IndexedDB — Dosyalarım ---------------- */
 let dbPromise = new Promise((resolve,reject)=>{
