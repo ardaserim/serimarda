@@ -355,7 +355,7 @@ textarea.memory-box{
     <div class="section-title">Tanı</div>
     <button class="small-btn" id="healthCheckBtn">🩺 Sistem Kontrolü</button>
     <div id="healthResult" style="margin-top:8px; font-size:11.5px;"></div>
-    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 30</p>
+    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 33</p>
   </aside>
 
   <main>
@@ -750,12 +750,15 @@ textarea.memory-box{
             <p style="font-size:12px; color:var(--text-muted); margin-top:10px;">Skor: <span id="quizScore">0</span></p>
           </div>
           <div id="funDebate" style="margin-top:18px; display:none;">
-            <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:10px;">İki bağlı model bir konuda karşılıklı tartışır — sen de araya girip söz söyleyebilirsin.</p>
+            <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:10px;">Bağlı modeller bir konuda karşılıklı tartışır — sen de araya girip söz söyleyebilirsin.</p>
+            <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-muted); margin-bottom:8px; cursor:pointer;">
+              <input type="checkbox" id="debateCodeMode" style="cursor:pointer;"> 🧑‍💻 Kod tartışması modu — modeller bir kod parçasını tartışıp birlikte düzeltsin
+            </label>
             <input id="debateTopic" class="memory-box" style="min-height:auto; padding:8px;" placeholder="Tartışma konusu — örn: uzaktan çalışma ofis çalışmasından daha verimlidir">
-            <div style="margin-top:8px;">
-              <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:6px;">Masaya kimler otursun? (bağlı olan tüm modeller listelenir)</div>
-              <div id="debateParticipantList" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+            <div id="debateCodeWrap" style="display:none; margin-top:8px;">
+              <textarea id="debateCodeInput" class="memory-box" style="min-height:140px; font-family:'JetBrains Mono',monospace; font-size:12px;" placeholder="Tartışılacak/düzeltilecek kodu buraya yapıştır..."></textarea>
             </div>
+            <div style="margin-top:8px; font-size:11.5px; color:var(--text-muted);" id="debateParticipantList"></div>
             <div style="display:flex; gap:8px; margin-top:8px;">
               <button id="debateStartBtn" style="flex:1; padding:10px; border-radius:6px; border:none; background:var(--accent); color:#16171A; font-weight:600; font-size:13px; cursor:pointer;">Başlat</button>
               <button id="debateStopBtn" style="flex:1; padding:10px; border-radius:6px; border:1px solid var(--border); background:none; color:var(--text-muted); font-weight:600; font-size:13px; cursor:pointer;" disabled>Durdur</button>
@@ -764,6 +767,10 @@ textarea.memory-box{
             <div id="debateUserRow" style="display:none; gap:8px; margin-top:10px;">
               <input id="debateUserInput" placeholder="Araya gir, bir şey söyle..." style="flex:1; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:9px; border-radius:6px; font-size:13px;">
               <button id="debateUserSendBtn" style="width:auto; padding:9px 16px; border-radius:6px; border:none; background:var(--accent); color:#16171A; font-weight:600; cursor:pointer;">Söyle</button>
+            </div>
+            <div id="debateCodeResultWrap" style="display:none; margin-top:14px;">
+              <button id="debateCodeFixBtn" style="width:100%; padding:10px; border-radius:6px; border:1px solid var(--accent); background:none; color:var(--accent); font-weight:600; font-size:13px; cursor:pointer;">✅ Tartışmaya göre kodu düzelt</button>
+              <div id="debateCodeResult" style="margin-top:12px;"></div>
             </div>
           </div>
         </div>
@@ -784,10 +791,11 @@ const PRESETS = [
   {id:'cohere', name:'Cohere', format:'openai', baseUrl:'https://api.cohere.com/compatibility/v1/chat/completions', model:'command-r-plus', vision:false, free:true},
   {id:'qwen', name:'Qwen (Alibaba)', format:'openai', baseUrl:'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions', model:'qwen-plus', vision:false, free:true},
   {id:'nvidia', name:'NVIDIA NIM', format:'openai', baseUrl:'https://integrate.api.nvidia.com/v1/chat/completions', model:'meta/llama-3.1-70b-instruct', vision:false, free:true},
-  {id:'zhipu', name:'Zhipu — GLM', format:'openai', baseUrl:'https://open.bigmodel.cn/api/paas/v4/chat/completions', model:'glm-4-flash', vision:false, free:true},
+  {id:'zhipu', name:'Z.AI — GLM', format:'openai', baseUrl:'https://api.z.ai/api/paas/v4/chat/completions', model:'glm-4.7-flash', vision:false, free:true},
   {id:'moonshot', name:'Moonshot — Kimi', format:'openai', baseUrl:'https://api.moonshot.cn/v1/chat/completions', model:'moonshot-v1-8k', vision:false, free:true},
   {id:'yi', name:'01.AI — Yi', format:'openai', baseUrl:'https://api.lingyiwanwu.com/v1/chat/completions', model:'yi-large', vision:false, free:true},
   {id:'ai21', name:'AI21 — Jamba', format:'openai', baseUrl:'https://api.ai21.com/studio/v1/chat/completions', model:'jamba-large', vision:false, free:true},
+  {id:'cloudflare', name:'Cloudflare Workers AI', format:'openai', baseUrl:'https://api.cloudflare.com/client/v4/accounts/HESAP_ID_BURAYA/ai/v1/chat/completions', model:'@cf/meta/llama-3.1-8b-instruct', vision:false, free:true},
   // --- ödeme yöntemi gerektiren ---
   {id:'anthropic', name:'Anthropic — Claude', format:'anthropic', baseUrl:'https://api.anthropic.com/v1/messages', model:'claude-sonnet-4-6', vision:true, free:false},
   {id:'openai', name:'OpenAI — GPT', format:'openai', baseUrl:'https://api.openai.com/v1/chat/completions', model:'gpt-4o', vision:true, free:false},
@@ -1931,7 +1939,7 @@ async function generateWithPollinations(prompt){
   const typingEl = addTyping();
   try{
     const seed = Math.floor(Math.random()*1000000);
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&model=flux&seed=${seed}`;
     const dataUrl = await new Promise((resolve, reject) => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
@@ -1945,7 +1953,7 @@ async function generateWithPollinations(prompt){
       img.src = url;
     });
     typingEl.remove();
-    addMsg('assistant', 'Üretilen görsel (Pollinations — ücretsiz):', 'Pollinations.ai', dataUrl);
+    addMsg('assistant', 'Üretilen görsel (FLUX — Pollinations üzerinden, tamamen ücretsiz):', 'FLUX (black-forest-labs) via Pollinations.ai', dataUrl);
     saveToLibrary('uretilen-' + Date.now() + '.png', 'image/png', dataUrl);
   }catch(err){
     typingEl.remove();
@@ -2667,31 +2675,40 @@ let debateLog = [];
 let debateTopic = '';
 let debateParticipants = [];
 let debateTurnIndex = 0;
+let debateCodeModeOn = false;
+let debateOriginalCode = '';
+document.getElementById('debateCodeMode').addEventListener('change', (e) => {
+  debateCodeModeOn = e.target.checked;
+  document.getElementById('debateCodeWrap').style.display = debateCodeModeOn ? 'block' : 'none';
+  document.getElementById('debateTopic').placeholder = debateCodeModeOn
+    ? 'Bu kodda ne aranmalı — örn: performans sorunlarını bul, hataları düzelt'
+    : 'Tartışma konusu — örn: uzaktan çalışma ofis çalışmasından daha verimlidir';
+});
 function populateDebateParticipants(){
   const active = providers.filter(p => p.enabled && p.key);
   const box = document.getElementById('debateParticipantList');
-  box.innerHTML = '';
-  active.forEach(p => {
-    const label = document.createElement('label');
-    label.style.cssText = 'display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text-muted); background:var(--surface-2); padding:6px 10px; border-radius:20px; cursor:pointer;';
-    label.innerHTML = `<input type="checkbox" class="debate-participant-chk" value="${p.id}" checked style="cursor:pointer;"> ${p.name}`;
-    box.appendChild(label);
-  });
-  if(active.length === 0) box.innerHTML = '<p style="font-size:12px; color:var(--text-muted);">Önce sol menüden en az 2 model bağla.</p>';
+  box.textContent = active.length
+    ? `🪑 Masada otomatik olarak: ${active.map(p => p.name).join(', ')}`
+    : 'Sol menüden en az 2 model bağla, otomatik masaya otursunlar.';
 }
 document.querySelector('.navitem[data-tab="fun"]').addEventListener('click', populateDebateParticipants);
 document.getElementById('debateStartBtn').addEventListener('click', async () => {
   syncProvidersFromDOM();
   debateTopic = document.getElementById('debateTopic').value.trim();
-  if(!debateTopic){ addSysNote('Önce bir tartışma konusu yaz.', true); return; }
-  const checkedIds = Array.from(document.querySelectorAll('.debate-participant-chk:checked')).map(c => c.value);
-  debateParticipants = providers.filter(p => checkedIds.includes(p.id));
-  if(debateParticipants.length < 2){ addSysNote('Tartışma için en az 2 model seçili olmalı.', true); return; }
+  if(!debateTopic){ addSysNote(debateCodeModeOn ? 'Önce kodda ne aranacağını yaz.' : 'Önce bir tartışma konusu yaz.', true); return; }
+  if(debateCodeModeOn){
+    debateOriginalCode = document.getElementById('debateCodeInput').value.trim();
+    if(!debateOriginalCode){ addSysNote('Önce tartışılacak kodu yapıştır.', true); return; }
+  }
+  debateParticipants = providers.filter(p => p.enabled && p.key);
+  if(debateParticipants.length < 2){ addSysNote('Tartışma için en az 2 model bağlı ve etkin olmalı — sol menüden ekle.', true); return; }
   debateLog = [];
   debateActive = true;
   debateTurnIndex = 0;
   document.getElementById('debateBox').innerHTML = '';
   document.getElementById('debateUserRow').style.display = 'flex';
+  document.getElementById('debateCodeResultWrap').style.display = debateCodeModeOn ? 'block' : 'none';
+  document.getElementById('debateCodeResult').innerHTML = '';
   document.getElementById('debateStartBtn').disabled = true;
   document.getElementById('debateStopBtn').disabled = false;
   runDebateRound();
@@ -2721,26 +2738,65 @@ function addDebateBubble(label, text){
 }
 async function runDebateRound(){
   if(!debateActive) return;
+  const userBox = document.getElementById('debateUserInput');
+  if(userBox.value.trim()){
+    setTimeout(runDebateRound, 1000);
+    return;
+  }
   const provider = debateParticipants[debateTurnIndex % debateParticipants.length];
   const otherNames = debateParticipants.filter(p => p.id !== provider.id).map(p => p.name).join(', ');
   const loadingRow = addDebateBubble(provider.name, '…');
   const transcript = debateLog.map(e => `${e.label}: ${e.text}`).join('\n') || '(henüz kimse konuşmadı)';
-  const sysPrompt = `Bir masa etrafında toplanmış, "${debateTopic}" konusunu tartışan bir grubun içindesin. Senin adın: ${provider.name}. Diğer katılımcılar: ${otherNames}. Kendi bakış açını getir, önceki konuşmacıların söylediklerine gerçekten cevap ver — katılabilir, itiraz edebilir, yeni bir açı ekleyebilirsin, ama tekrar etme. Kullanıcı ("Sen" olarak işaretli) araya girdiyse ona doğrudan hitap et. Doğal bir grup sohbeti gibi, 2-4 cümle ile cevap ver.`;
+  const sysPrompt = debateCodeModeOn
+    ? `Bir masa etrafında toplanmış, bir KOD parçasını inceleyip tartışan bir yazılımcı grubunun içindesin. Senin adın: ${provider.name}. Diğer katılımcılar: ${otherNames}. Odak: "${debateTopic}". İncelenecek kod:\n\`\`\`\n${debateOriginalCode}\n\`\`\`\nÖnceki konuşmacıların bulduklarına gerçekten cevap ver — katılabilir, itiraz edebilir, gözden kaçan bir hata/iyileştirme ekleyebilirsin, ama tekrar etme. Kullanıcı ("Sen" olarak işaretli) araya girdiyse ona doğrudan hitap et. Kısa (2-4 cümle), somut ol — hangi satır/kısım, neden sorunlu, ne öneriyorsun.`
+    : `Bir masa etrafında toplanmış, "${debateTopic}" konusunu tartışan bir grubun içindesin. Senin adın: ${provider.name}. Diğer katılımcılar: ${otherNames}. Kendi bakış açını getir, önceki konuşmacıların söylediklerine gerçekten cevap ver — katılabilir, itiraz edebilir, yeni bir açı ekleyebilirsin, ama tekrar etme. Kullanıcı ("Sen" olarak işaretli) araya girdiyse ona doğrudan hitap et. Doğal bir grup sohbeti gibi, 2-4 cümle ile cevap ver.`;
   const result = await callProviderSmart(provider, sysPrompt, `Şimdiye kadarki konuşma:\n${transcript}\n\nSıra sende (${provider.name}), katıl.`);
   loadingRow.remove();
   if(!debateActive) return;
   if(!result.ok){
     addDebateBubble(provider.name, '(cevap alınamadı: ' + result.error + ')');
     debateTurnIndex++;
-    setTimeout(runDebateRound, 1500);
+    setTimeout(runDebateRound, 2000);
     return;
   }
   debateLog.push({label: provider.name, text: result.text});
   addDebateBubble(provider.name, result.text);
   speakText(result.text);
   debateTurnIndex++;
-  setTimeout(runDebateRound, 2500);
+  const wordCount = result.text.trim().split(/\s+/).length;
+  const readDelay = Math.max(5000, Math.min(15000, wordCount * 400));
+  setTimeout(runDebateRound, readDelay);
 }
+document.getElementById('debateUserInput').addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('debateUserSendBtn').click(); }
+});
+document.getElementById('debateCodeFixBtn').addEventListener('click', async () => {
+  if(debateLog.length === 0){ addSysNote('Önce tartışmanın biraz ilerlemesini bekle.', true); return; }
+  const box = document.getElementById('debateCodeResult');
+  box.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Tartışmaya göre kod düzeltiliyor...</p>';
+  const transcript = debateLog.map(e => `${e.label}: ${e.text}`).join('\n');
+  const synthesizer = debateParticipants[0];
+  const sysPrompt = `Sana orijinal bir kod ve o kod hakkında bir grup yazılımcının tartışmasının dökümü verilecek. Tartışmada bulunan gerçek sorunları ve önerileri koda uygula. SADECE düzeltilmiş, çalışır durumdaki tam kodu ver — açıklama, yorum satırı ekleme, markdown kod bloğu işareti (\`\`\`) koyma, sadece ham kod.`;
+  const prompt = `Orijinal kod:\n${debateOriginalCode}\n\nTartışma:\n${transcript}\n\nDüzeltilmiş kodu ver.`;
+  const result = await callProviderSmart(synthesizer, sysPrompt, prompt);
+  if(!result.ok){ box.innerHTML = `<p style="font-size:12.5px;color:var(--danger);">Düzeltilemedi: ${result.error}</p>`; return; }
+  const cleaned = result.text.replace(/^```[a-z]*\n?/i, '').replace(/```$/,'').trim();
+  box.innerHTML = `
+    <div class="file-card" style="align-items:flex-start;">
+      <div class="fi-meta" style="margin-bottom:6px;">Düzelten: ${synthesizer.name} (tartışmadaki bulgulara göre)</div>
+      <pre style="white-space:pre-wrap; font-family:'JetBrains Mono',monospace; font-size:12px; background:var(--surface-2); padding:10px; border-radius:6px; width:100%; overflow-x:auto;">${cleaned.replace(/</g,'&lt;')}</pre>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button id="debateCodeCopyBtn" style="width:auto;padding:8px 14px;">Kopyala</button>
+        <button id="debateCodeDownloadBtn" style="width:auto;padding:8px 14px;">İndir</button>
+      </div>
+    </div>`;
+  document.getElementById('debateCodeCopyBtn').onclick = () => navigator.clipboard.writeText(cleaned).then(() => addSysNote('Kopyalandı.'));
+  document.getElementById('debateCodeDownloadBtn').onclick = () => {
+    const name = 'duzeltilmis-kod-' + Date.now() + '.txt';
+    downloadFile(name, cleaned, 'text/plain');
+    saveToLibrary(name, 'text/plain', textToDataUrl(cleaned, 'text/plain'));
+  };
+});
 
 /* ---------------- Namespaced depolama yardımcıları ---------------- */
 function nsGet(key, def){ try{ const v = JSON.parse(localStorage.getItem(key)); return v === null || v === undefined ? def : v; }catch(e){ return def; } }
