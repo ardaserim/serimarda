@@ -355,7 +355,7 @@ textarea.memory-box{
     <div class="section-title">Tanı</div>
     <button class="small-btn" id="healthCheckBtn">🩺 Sistem Kontrolü</button>
     <div id="healthResult" style="margin-top:8px; font-size:11.5px;"></div>
-    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 35</p>
+    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 36</p>
   </aside>
 
   <main>
@@ -1452,7 +1452,7 @@ function getRecentHistory(limit){
 }
 
 function pickBestModel(ids, previousModel){
-  const bad = /(embed|whisper|tts|moderation|rerank|guard|dall-e|imagen|image-gen|image-preview|audio|live|video|vision-only|computer-use|native-audio|realtime)/i;
+  const bad = /(embed|whisper|tts|moderation|rerank|guard|dall-e|imagen|imagen-|image-gen|image-preview|audio|live|video|veo|vision-only|computer-use|native-audio|realtime|flux)/i;
   const candidates = ids.filter(id => !bad.test(id));
   const pool = candidates.length ? candidates : ids;
   const good = /(flash|pro|chat|instruct|versatile|sonar)/i;
