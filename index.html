@@ -355,7 +355,7 @@ textarea.memory-box{
     <div class="section-title">Tanı</div>
     <button class="small-btn" id="healthCheckBtn">🩺 Sistem Kontrolü</button>
     <div id="healthResult" style="margin-top:8px; font-size:11.5px;"></div>
-    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 26</p>
+    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 27</p>
   </aside>
 
   <main>
@@ -752,9 +752,9 @@ textarea.memory-box{
           <div id="funDebate" style="margin-top:18px; display:none;">
             <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:10px;">İki bağlı model bir konuda karşılıklı tartışır — sen de araya girip söz söyleyebilirsin.</p>
             <input id="debateTopic" class="memory-box" style="min-height:auto; padding:8px;" placeholder="Tartışma konusu — örn: uzaktan çalışma ofis çalışmasından daha verimlidir">
-            <div style="display:flex; gap:8px; margin-top:8px;">
-              <select id="debateProviderA" style="flex:1; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:12px;"></select>
-              <select id="debateProviderB" style="flex:1; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:12px;"></select>
+            <div style="margin-top:8px;">
+              <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:6px;">Masaya kimler otursun? (bağlı olan tüm modeller listelenir)</div>
+              <div id="debateParticipantList" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
             </div>
             <div style="display:flex; gap:8px; margin-top:8px;">
               <button id="debateStartBtn" style="flex:1; padding:10px; border-radius:6px; border:none; background:var(--accent); color:#16171A; font-weight:600; font-size:13px; cursor:pointer;">Başlat</button>
@@ -2654,26 +2654,31 @@ document.getElementById('quizStartBtn').addEventListener('click', async () => {
 let debateActive = false;
 let debateLog = [];
 let debateTopic = '';
-let debateNextSide = 'A';
-let debatePendingUserMsg = null;
-function populateDebateSelects(){
+let debateParticipants = [];
+let debateTurnIndex = 0;
+function populateDebateParticipants(){
   const active = providers.filter(p => p.enabled && p.key);
-  const optionsHtml = active.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-  const selA = document.getElementById('debateProviderA');
-  const selB = document.getElementById('debateProviderB');
-  selA.innerHTML = optionsHtml; selB.innerHTML = optionsHtml;
-  if(active.length > 1) selB.selectedIndex = 1;
+  const box = document.getElementById('debateParticipantList');
+  box.innerHTML = '';
+  active.forEach(p => {
+    const label = document.createElement('label');
+    label.style.cssText = 'display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text-muted); background:var(--surface-2); padding:6px 10px; border-radius:20px; cursor:pointer;';
+    label.innerHTML = `<input type="checkbox" class="debate-participant-chk" value="${p.id}" checked style="cursor:pointer;"> ${p.name}`;
+    box.appendChild(label);
+  });
+  if(active.length === 0) box.innerHTML = '<p style="font-size:12px; color:var(--text-muted);">Önce sol menüden en az 2 model bağla.</p>';
 }
-document.querySelector('.navitem[data-tab="fun"]').addEventListener('click', populateDebateSelects);
+document.querySelector('.navitem[data-tab="fun"]').addEventListener('click', populateDebateParticipants);
 document.getElementById('debateStartBtn').addEventListener('click', async () => {
   syncProvidersFromDOM();
   debateTopic = document.getElementById('debateTopic').value.trim();
   if(!debateTopic){ addSysNote('Önce bir tartışma konusu yaz.', true); return; }
-  const active = providers.filter(p => p.enabled && p.key);
-  if(active.length < 2){ addSysNote('Tartışma için en az 2 bağlı model gerekiyor.', true); return; }
+  const checkedIds = Array.from(document.querySelectorAll('.debate-participant-chk:checked')).map(c => c.value);
+  debateParticipants = providers.filter(p => checkedIds.includes(p.id));
+  if(debateParticipants.length < 2){ addSysNote('Tartışma için en az 2 model seçili olmalı.', true); return; }
   debateLog = [];
   debateActive = true;
-  debateNextSide = 'A';
+  debateTurnIndex = 0;
   document.getElementById('debateBox').innerHTML = '';
   document.getElementById('debateUserRow').style.display = 'flex';
   document.getElementById('debateStartBtn').disabled = true;
@@ -2691,7 +2696,6 @@ document.getElementById('debateUserSendBtn').addEventListener('click', () => {
   if(!text) return;
   debateLog.push({label:'Sen', text});
   addDebateBubble('Sen', text);
-  debatePendingUserMsg = text;
   inp.value = '';
 });
 function addDebateBubble(label, text){
@@ -2706,26 +2710,24 @@ function addDebateBubble(label, text){
 }
 async function runDebateRound(){
   if(!debateActive) return;
-  const providerId = debateNextSide === 'A' ? document.getElementById('debateProviderA').value : document.getElementById('debateProviderB').value;
-  const provider = providers.find(p => p.id === providerId);
-  const sideLabel = debateNextSide === 'A' ? 'Taraf A' : 'Taraf B';
-  const loadingRow = addDebateBubble(sideLabel, '…');
+  const provider = debateParticipants[debateTurnIndex % debateParticipants.length];
+  const otherNames = debateParticipants.filter(p => p.id !== provider.id).map(p => p.name).join(', ');
+  const loadingRow = addDebateBubble(provider.name, '…');
   const transcript = debateLog.map(e => `${e.label}: ${e.text}`).join('\n') || '(henüz kimse konuşmadı)';
-  const sysPrompt = `Sen bir tartışma katılımcısısın. Konu: "${debateTopic}". Sen ${sideLabel === 'Taraf A' ? 'A tarafını (destekleyen görüşü)' : 'B tarafını (eleştiren/karşı görüşü)'} savunuyorsun. Karşı tarafın söylediklerine gerçekten cevap ver, tekrar etme, saygılı ama net ol. Kullanıcı ("Sen" olarak işaretli) araya girdiyse ona doğrudan hitap et. Cevabın 2-4 cümle, doğal bir konuşma dili olsun.`;
-  const result = await callProviderSmart(provider, sysPrompt, `Şimdiye kadarki tartışma:\n${transcript}\n\nSıra sende, cevap ver.`);
+  const sysPrompt = `Bir masa etrafında toplanmış, "${debateTopic}" konusunu tartışan bir grubun içindesin. Senin adın: ${provider.name}. Diğer katılımcılar: ${otherNames}. Kendi bakış açını getir, önceki konuşmacıların söylediklerine gerçekten cevap ver — katılabilir, itiraz edebilir, yeni bir açı ekleyebilirsin, ama tekrar etme. Kullanıcı ("Sen" olarak işaretli) araya girdiyse ona doğrudan hitap et. Doğal bir grup sohbeti gibi, 2-4 cümle ile cevap ver.`;
+  const result = await callProviderSmart(provider, sysPrompt, `Şimdiye kadarki konuşma:\n${transcript}\n\nSıra sende (${provider.name}), katıl.`);
   loadingRow.remove();
   if(!debateActive) return;
   if(!result.ok){
-    addDebateBubble(sideLabel, '(cevap alınamadı: ' + result.error + ')');
-    debateActive = false;
-    document.getElementById('debateStartBtn').disabled = false;
-    document.getElementById('debateStopBtn').disabled = true;
+    addDebateBubble(provider.name, '(cevap alınamadı: ' + result.error + ')');
+    debateTurnIndex++;
+    setTimeout(runDebateRound, 1500);
     return;
   }
-  debateLog.push({label: sideLabel, text: result.text});
-  addDebateBubble(sideLabel, result.text);
+  debateLog.push({label: provider.name, text: result.text});
+  addDebateBubble(provider.name, result.text);
   speakText(result.text);
-  debateNextSide = debateNextSide === 'A' ? 'B' : 'A';
+  debateTurnIndex++;
   setTimeout(runDebateRound, 2500);
 }
 
