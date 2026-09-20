@@ -355,7 +355,7 @@ textarea.memory-box{
     <div class="section-title">Tanı</div>
     <button class="small-btn" id="healthCheckBtn">🩺 Sistem Kontrolü</button>
     <div id="healthResult" style="margin-top:8px; font-size:11.5px;"></div>
-    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 36</p>
+    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 37</p>
   </aside>
 
   <main>
@@ -1095,6 +1095,7 @@ function renderProviders(){
   });
   renderStatusDots();
 }
+let providerHealTimers = {};
 function onProviderField(e){
   const idx = +e.target.dataset.idx, act = e.target.dataset.act;
   if(act === 'enable') providers[idx].enabled = e.target.checked;
@@ -1104,6 +1105,28 @@ function onProviderField(e){
   if(act === 'baseUrl') providers[idx].baseUrl = e.target.value;
   saveProviders();
   renderStatusDots();
+  if(act === 'enable' || act === 'key'){
+    clearTimeout(providerHealTimers[idx]);
+    providerHealTimers[idx] = setTimeout(() => autoHealProviderModel(idx), 1200);
+  }
+}
+async function autoHealProviderModel(idx){
+  const p = providers[idx];
+  if(!p || !p.enabled || !p.key) return;
+  const canList = p.format === 'openai' || p.format === 'anthropic' || p.format === 'gemini';
+  if(!canList) return;
+  try{
+    const ids = await fetchModelsFor(p);
+    if(!ids || ids.length === 0) return;
+    if(p.model && ids.includes(p.model)) return;
+    const newModel = pickBestModel(ids, p.model);
+    if(!newModel || newModel === p.model) return;
+    const oldModel = p.model;
+    providers[idx].model = newModel;
+    saveProviders();
+    if(typeof renderProviders === 'function') renderProviders();
+    addSysNote(`${p.name}: model otomatik ayarlandı (${oldModel || 'boş'} → ${newModel}) — elle uğraşmana gerek yok.`);
+  }catch(e){ /* sessizce geç — gerçek kullanım anında zaten tekrar denenecek */ }
 }
 function renderStatusDots(){
   const el = document.getElementById('statusDots');
