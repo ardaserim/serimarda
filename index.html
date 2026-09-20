@@ -355,7 +355,7 @@ textarea.memory-box{
     <div class="section-title">Tanı</div>
     <button class="small-btn" id="healthCheckBtn">🩺 Sistem Kontrolü</button>
     <div id="healthResult" style="margin-top:8px; font-size:11.5px;"></div>
-    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 27</p>
+    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 28</p>
   </aside>
 
   <main>
@@ -2517,6 +2517,7 @@ document.querySelectorAll('.fun-tab').forEach(b => b.addEventListener('click', (
   document.getElementById('funRps').style.display = which === 'rps' ? 'block' : 'none';
   document.getElementById('funQuiz').style.display = which === 'quiz' ? 'block' : 'none';
   document.getElementById('funDebate').style.display = which === 'debate' ? 'block' : 'none';
+  if(which === 'debate') populateDebateParticipants();
 }));
 
 /* ---------------- X-O (Tic-Tac-Toe) ---------------- */
@@ -3766,6 +3767,7 @@ initActiveSession();
 restoreChat();
 renderChatSessionsList();
 renderNotifications();
+populateDebateParticipants();
 loadEmailJsConfig();
 loadCuttlyConfig();
 loadFirecrawlKey();
