@@ -355,7 +355,7 @@ textarea.memory-box{
     <div class="section-title">Tanı</div>
     <button class="small-btn" id="healthCheckBtn">🩺 Sistem Kontrolü</button>
     <div id="healthResult" style="margin-top:8px; font-size:11.5px;"></div>
-    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 37</p>
+    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 38</p>
   </aside>
 
   <main>
@@ -769,7 +769,7 @@ textarea.memory-box{
             <button id="debateUserSendBtn" style="width:auto; padding:9px 16px; border-radius:6px; border:none; background:var(--accent); color:#16171A; font-weight:600; cursor:pointer;">Söyle</button>
           </div>
           <div id="debateCodeResultWrap" style="display:none; margin-top:14px;">
-            <button id="debateCodeFixBtn" style="width:100%; padding:10px; border-radius:6px; border:1px solid var(--accent); background:none; color:var(--accent); font-weight:600; font-size:13px; cursor:pointer;">✅ Tartışmaya göre kodu düzelt</button>
+            <button id="debateCodeFixBtn" style="width:100%; padding:10px; border-radius:6px; border:1px solid var(--accent); background:none; color:var(--accent); font-weight:600; font-size:13px; cursor:pointer;">✅ Tartışmaya göre kodu üret/düzelt</button>
             <div id="debateCodeResult" style="margin-top:12px;"></div>
           </div>
         </div>
@@ -2700,8 +2700,9 @@ document.getElementById('debateCodeMode').addEventListener('change', (e) => {
   debateCodeModeOn = e.target.checked;
   document.getElementById('debateCodeWrap').style.display = debateCodeModeOn ? 'block' : 'none';
   document.getElementById('debateTopic').placeholder = debateCodeModeOn
-    ? 'Bu kodda ne aranmalı — örn: performans sorunlarını bul, hataları düzelt'
+    ? 'Var olan kodda ne aranmalı, YA DA sıfırdan ne istediğini anlat — örn: iOS/Mac\'te kullanacağım basit bir masraf takip uygulaması istiyorum'
     : 'Tartışma konusu — örn: uzaktan çalışma ofis çalışmasından daha verimlidir';
+  document.getElementById('debateCodeInput').placeholder = 'Var olan bir kod varsa buraya yapıştır — BOŞ bırakırsan modeller konuya göre sıfırdan bir uygulama tasarlar.';
 });
 function populateDebateParticipants(){
   const active = providers.filter(p => p.enabled && p.key);
@@ -2713,10 +2714,9 @@ function populateDebateParticipants(){
 document.getElementById('debateStartBtn').addEventListener('click', async () => {
   syncProvidersFromDOM();
   debateTopic = document.getElementById('debateTopic').value.trim();
-  if(!debateTopic){ addSysNote(debateCodeModeOn ? 'Önce kodda ne aranacağını yaz.' : 'Önce bir tartışma konusu yaz.', true); return; }
+  if(!debateTopic){ addSysNote(debateCodeModeOn ? 'Önce ne istediğini/kodda ne aranacağını yaz.' : 'Önce bir tartışma konusu yaz.', true); return; }
   if(debateCodeModeOn){
     debateOriginalCode = document.getElementById('debateCodeInput').value.trim();
-    if(!debateOriginalCode){ addSysNote('Önce tartışılacak kodu yapıştır.', true); return; }
   }
   debateParticipants = providers.filter(p => p.enabled && p.key);
   if(debateParticipants.length < 2){ addSysNote('Tartışma için en az 2 model bağlı ve etkin olmalı — sol menüden ekle.', true); return; }
@@ -2766,7 +2766,9 @@ async function runDebateRound(){
   const loadingRow = addDebateBubble(provider.name, '…');
   const transcript = debateLog.map(e => `${e.label}: ${e.text}`).join('\n') || '(henüz kimse konuşmadı)';
   const sysPrompt = debateCodeModeOn
-    ? `Bir masa etrafında toplanmış, bir KOD parçasını inceleyip tartışan bir yazılımcı grubunun içindesin. Senin adın: ${provider.name}. Diğer katılımcılar: ${otherNames}. Odak: "${debateTopic}". İncelenecek kod:\n\`\`\`\n${debateOriginalCode}\n\`\`\`\nÖnceki konuşmacıların bulduklarına gerçekten cevap ver — katılabilir, itiraz edebilir, gözden kaçan bir hata/iyileştirme ekleyebilirsin, ama tekrar etme. Kullanıcı ("Sen" olarak işaretli) araya girdiyse ona doğrudan hitap et. Kısa (2-4 cümle), somut ol — hangi satır/kısım, neden sorunlu, ne öneriyorsun.`
+    ? (debateOriginalCode
+        ? `Bir masa etrafında toplanmış, bir KOD parçasını inceleyip tartışan bir yazılımcı grubunun içindesin. Senin adın: ${provider.name}. Diğer katılımcılar: ${otherNames}. Odak: "${debateTopic}". İncelenecek kod:\n\`\`\`\n${debateOriginalCode}\n\`\`\`\nÖnceki konuşmacıların bulduklarına gerçekten cevap ver — katılabilir, itiraz edebilir, gözden kaçan bir hata/iyileştirme ekleyebilirsin, ama tekrar etme. Kullanıcı ("Sen" olarak işaretli) araya girdiyse ona doğrudan hitap et. Kısa (2-4 cümle), somut ol — hangi satır/kısım, neden sorunlu, ne öneriyorsun.`
+        : `Bir masa etrafında toplanmış, sıfırdan bir uygulama/araç TASARLAYAN bir yazılımcı grubunun içindesin. Senin adın: ${provider.name}. Diğer katılımcılar: ${otherNames}. Kullanıcının isteği: "${debateTopic}". Önceki konuşmacıların önerdiklerine gerçekten cevap ver — hangi özellikler olmalı, nasıl bir arayüz, hangi teknik yaklaşım (tek dosyalık HTML/JS/CSS, tarayıcıda çalışan, macOS/iOS Safari'de "Ana Ekrana Ekle" ile kurulabilir olmalı). Katılabilir, itiraz edebilir, eksik bir noktayı ekleyebilirsin, ama tekrar etme. Kullanıcı ("Sen" olarak işaretli) araya girdiyse ona doğrudan hitap et. Kısa (2-4 cümle), somut ol.`)
     : `Bir masa etrafında toplanmış, "${debateTopic}" konusunu tartışan bir grubun içindesin. Senin adın: ${provider.name}. Diğer katılımcılar: ${otherNames}. Kendi bakış açını getir, önceki konuşmacıların söylediklerine gerçekten cevap ver — katılabilir, itiraz edebilir, yeni bir açı ekleyebilirsin, ama tekrar etme. Kullanıcı ("Sen" olarak işaretli) araya girdiyse ona doğrudan hitap et. Doğal bir grup sohbeti gibi, 2-4 cümle ile cevap ver.`;
   const result = await callProviderSmart(provider, sysPrompt, `Şimdiye kadarki konuşma:\n${transcript}\n\nSıra sende (${provider.name}), katıl.`);
   loadingRow.remove();
@@ -2790,30 +2792,38 @@ document.getElementById('debateUserInput').addEventListener('keydown', e => {
 });
 document.getElementById('debateCodeFixBtn').addEventListener('click', async () => {
   if(debateLog.length === 0){ addSysNote('Önce tartışmanın biraz ilerlemesini bekle.', true); return; }
+  const isFromScratch = !debateOriginalCode;
   if(debateOriginalCode.length > 20000){ addSysNote('Bu kod oldukça büyük (20.000+ karakter) — bazı modeller bunu tam okuyamayabilir ya da düzeltilmiş halini eksik/kesik döndürebilir. Küçük parçalar halinde denemen daha güvenilir sonuç verir.', true); }
   const box = document.getElementById('debateCodeResult');
-  box.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Tartışmaya göre kod düzeltiliyor...</p>';
+  box.innerHTML = `<p style="font-size:12.5px;color:var(--text-muted);">${isFromScratch ? 'Tartışmaya göre uygulama oluşturuluyor...' : 'Tartışmaya göre kod düzeltiliyor...'}</p>`;
   const transcript = debateLog.map(e => `${e.label}: ${e.text}`).join('\n');
   const synthesizer = debateParticipants[0];
-  const sysPrompt = `Sana orijinal bir kod ve o kod hakkında bir grup yazılımcının tartışmasının dökümü verilecek. Tartışmada bulunan gerçek sorunları ve önerileri koda uygula. SADECE düzeltilmiş, çalışır durumdaki tam kodu ver — açıklama, yorum satırı ekleme, markdown kod bloğu işareti (\`\`\`) koyma, sadece ham kod.`;
-  const prompt = `Orijinal kod:\n${debateOriginalCode}\n\nTartışma:\n${transcript}\n\nDüzeltilmiş kodu ver.`;
+  const sysPrompt = isFromScratch
+    ? `Sana bir uygulama isteği ve o istek hakkında bir grup yazılımcının tartışmasının dökümü verilecek. Tartışmada üzerinde durulan özellikleri ve yaklaşımı dikkate alarak, TEK BİR self-contained HTML dosyası üret — HTML+CSS+JS hepsi aynı dosyada, dış dosya/kütüphane bağımlılığı olmasın (gerekirse https://cdnjs.cloudflare.com üzerinden script eklenebilir), macOS/iOS Safari'de doğrudan açılıp çalışsın ve "Ana Ekrana Ekle" ile kurulabilsin. SADECE tam HTML kodunu ver — açıklama, markdown kod bloğu işareti (\`\`\`) koyma, sadece ham HTML.`
+    : `Sana orijinal bir kod ve o kod hakkında bir grup yazılımcının tartışmasının dökümü verilecek. Tartışmada bulunan gerçek sorunları ve önerileri koda uygula. SADECE düzeltilmiş, çalışır durumdaki tam kodu ver — açıklama, yorum satırı ekleme, markdown kod bloğu işareti (\`\`\`) koyma, sadece ham kod.`;
+  const prompt = isFromScratch
+    ? `Uygulama isteği: ${debateTopic}\n\nTartışma:\n${transcript}\n\nTam HTML dosyasını ver.`
+    : `Orijinal kod:\n${debateOriginalCode}\n\nTartışma:\n${transcript}\n\nDüzeltilmiş kodu ver.`;
   const result = await callProviderSmart(synthesizer, sysPrompt, prompt, null, null, null, 8000);
-  if(!result.ok){ box.innerHTML = `<p style="font-size:12.5px;color:var(--danger);">Düzeltilemedi: ${result.error}</p>`; return; }
+  if(!result.ok){ box.innerHTML = `<p style="font-size:12.5px;color:var(--danger);">${isFromScratch ? 'Oluşturulamadı' : 'Düzeltilemedi'}: ${result.error}</p>`; return; }
   const cleaned = result.text.replace(/^```[a-z]*\n?/i, '').replace(/```$/,'').trim();
+  const fileExt = isFromScratch ? 'html' : 'txt';
+  const fileMime = isFromScratch ? 'text/html' : 'text/plain';
   box.innerHTML = `
     <div class="file-card" style="align-items:flex-start;">
-      <div class="fi-meta" style="margin-bottom:6px;">Düzelten: ${synthesizer.name} (tartışmadaki bulgulara göre)</div>
-      <pre style="white-space:pre-wrap; font-family:'JetBrains Mono',monospace; font-size:12px; background:var(--surface-2); padding:10px; border-radius:6px; width:100%; overflow-x:auto;">${cleaned.replace(/</g,'&lt;')}</pre>
+      <div class="fi-meta" style="margin-bottom:6px;">${isFromScratch ? 'Oluşturan' : 'Düzelten'}: ${synthesizer.name} (tartışmadaki bulgulara göre)</div>
+      <pre style="white-space:pre-wrap; font-family:'JetBrains Mono',monospace; font-size:12px; background:var(--surface-2); padding:10px; border-radius:6px; width:100%; max-height:400px; overflow:auto;">${cleaned.replace(/</g,'&lt;')}</pre>
       <div style="display:flex; gap:8px; margin-top:10px;">
         <button id="debateCodeCopyBtn" style="width:auto;padding:8px 14px;">Kopyala</button>
-        <button id="debateCodeDownloadBtn" style="width:auto;padding:8px 14px;">İndir</button>
+        <button id="debateCodeDownloadBtn" style="width:auto;padding:8px 14px;">İndir (.${fileExt})</button>
       </div>
+      ${isFromScratch ? '<p style="font-size:11.5px; color:var(--text-faint); margin-top:8px;">İndirdikten sonra GitHub Pages\'e (ya da doğrudan Safari\'de açıp "Ana Ekrana Ekle" ile) kurabilirsin — nasıl yapılacağını sorman yeterli.</p>' : ''}
     </div>`;
   document.getElementById('debateCodeCopyBtn').onclick = () => navigator.clipboard.writeText(cleaned).then(() => addSysNote('Kopyalandı.'));
   document.getElementById('debateCodeDownloadBtn').onclick = () => {
-    const name = 'duzeltilmis-kod-' + Date.now() + '.txt';
-    downloadFile(name, cleaned, 'text/plain');
-    saveToLibrary(name, 'text/plain', textToDataUrl(cleaned, 'text/plain'));
+    const name = (isFromScratch ? 'uretilen-uygulama-' : 'duzeltilmis-kod-') + Date.now() + '.' + fileExt;
+    downloadFile(name, cleaned, fileMime);
+    saveToLibrary(name, fileMime, textToDataUrl(cleaned, fileMime));
   };
 });
 
