@@ -355,7 +355,7 @@ textarea.memory-box{
     <div class="section-title">Tanı</div>
     <button class="small-btn" id="healthCheckBtn">🩺 Sistem Kontrolü</button>
     <div id="healthResult" style="margin-top:8px; font-size:11.5px;"></div>
-    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 40</p>
+    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 41</p>
   </aside>
 
   <main>
@@ -643,15 +643,16 @@ textarea.memory-box{
             <option value="Haber metni">Haber</option>
           </select>
           <div class="field" style="margin-top:10px;"><label>Seri adı (opsiyonel — aynı adı kullanırsan önceki bölümlerin devamı gibi yazar)</label><input id="contentSeries" placeholder="Örn: Petrol Sektöründe İK"></div>
-          <div class="field" style="margin-top:10px;"><label>Karakter/kelime sınırı (opsiyonel — boş bırakırsan format kendi doğal uzunluğunda yazar)</label></div>
-          <div style="display:flex; gap:8px;">
-            <input id="contentLimitValue" type="number" min="1" placeholder="Örn: 280" style="flex:1;">
-            <select id="contentLimitUnit" style="background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:12.5px;">
-              <option value="karakter">karakter</option>
-              <option value="kelime">kelime</option>
-            </select>
-          </div>
+          <div class="field" style="margin-top:10px;"><label>Kelime hedefi — makalede 100 ile 10.000 arası olabilir (boş bırakırsan formatın doğal uzunluğunda yazar)</label></div>
+          <input id="contentLimitValue" type="number" min="1" max="10000" placeholder="Örn: 2000" style="width:100%;">
+          <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-muted); margin-top:10px; cursor:pointer;">
+            <input type="checkbox" id="contentHashtagResearch" checked style="cursor:pointer;"> 🔍 Gerçekten popüler hashtag'leri internetten araştır (uydurmasın)
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-muted); margin-top:6px; cursor:pointer;">
+            <input type="checkbox" id="contentImageGen" style="cursor:pointer;"> 🎨 Yazıya uygun bir görsel de üret (telifsiz, FLUX ile)
+          </label>
           <button id="contentGenerateBtn" style="width:100%; margin-top:10px; padding:10px; border-radius:6px; border:none; background:var(--accent); color:#16171A; font-weight:600; font-size:13px; cursor:pointer;">Yazıyı oluştur</button>
+          <div id="contentStage" style="font-size:11px; color:var(--accent-2); margin-top:8px; font-family:'JetBrains Mono',monospace;"></div>
           <div id="contentResult" style="margin-top:18px;"></div>
         </div>
       </div>
@@ -1548,17 +1549,17 @@ function numbersDiffer(successes){
   }
   return false;
 }
-async function askCouncil(systemPrompt, userText, log, imageDataUrl, attemptsOut, history, freeOnly){
+async function askCouncil(systemPrompt, userText, log, imageDataUrl, attemptsOut, history, freeOnly, maxTokensOverride){
   const active = providers.filter(p => p.enabled && p.key && (!imageDataUrl || p.vision) && (!freeOnly || p.free || p.local));
   if(active.length === 0) return null;
   if(active.length === 1){
-    const r = await callProviderSmart(active[0], systemPrompt, userText, imageDataUrl, history);
+    const r = await callProviderSmart(active[0], systemPrompt, userText, imageDataUrl, history, null, maxTokensOverride);
     if(r.ok) return {text:r.text, usedBy:[active[0].name]};
     if(attemptsOut) attemptsOut.push(`${active[0].name}: ${r.error}`);
     return null;
   }
   log && log(`${active.map(p=>p.name).join(', ')} modellerine aynı anda soruluyor...`);
-  const results = await Promise.all(active.map(p => callProviderSmart(p, systemPrompt, userText, imageDataUrl, history)));
+  const results = await Promise.all(active.map(p => callProviderSmart(p, systemPrompt, userText, imageDataUrl, history, null, maxTokensOverride)));
   const successes = active.map((p,i) => ({name:p.name, r:results[i]})).filter(x => x.r.ok);
   if(attemptsOut){
     active.forEach((p,i) => { if(!results[i].ok) attemptsOut.push(`${p.name}: ${results[i].error}`); });
@@ -1570,9 +1571,9 @@ async function askCouncil(systemPrompt, userText, log, imageDataUrl, attemptsOut
   const numericWarning = numbersDiffer(successes);
   const compiled = successes.map(s => `--- ${s.name} ---\n${s.r.text}`).join('\n\n');
   log && log(`${referee.name} cevapları karşılaştırıp doğruluyor...`);
-  const verifyPrompt = `Aşağıda aynı isteğe farklı yapay zekâ modellerinin verdiği cevaplar var. Bunları karşılaştır, çelişkileri belirt, hatalı olanı düzelt ve tek, net, doğrulanmış bir sonuç üret. ÇOK ÖNEMLİ: nihai cevabın orijinal talimattaki TÜM biçim kurallarına (uzunluk, hashtag, anahtar kelime, format, dil vb.) eksiksiz uymalı — cevapları birleştirirken bu kuralları asla atlama. Kaynak modelleri isimleriyle anma, sadece nihai cevabı ver.\n\nOrijinal talimat: ${systemPrompt}\n\nİstek: ${userText}\n\n${compiled}`;
+  const verifyPrompt = `Aşağıda aynı isteğe farklı yapay zekâ modellerinin verdiği cevaplar var. Bunları karşılaştır, çelişkileri belirt, hatalı olanı düzelt ve tek, net, doğrulanmış bir sonuç üret. ÇOK ÖNEMLİ: nihai cevabın orijinal talimattaki TÜM biçim kurallarına (uzunluk, hashtag, anahtar kelime, format, dil vb.) eksiksiz uymalı — cevapları birleştirirken bu kuralları asla atlama, uzunluğu KISALTMA. Kaynak modelleri isimleriyle anma, sadece nihai cevabı ver.\n\nOrijinal talimat: ${systemPrompt}\n\nİstek: ${userText}\n\n${compiled}`;
   const refereeProvider = active.find(p => p.name === referee.name);
-  const verified = await callProviderSmart(refereeProvider, 'Sen birden fazla AI cevabını karşılaştırıp doğrulayan bir hakemsin.', verifyPrompt);
+  const verified = await callProviderSmart(refereeProvider, 'Sen birden fazla AI cevabını karşılaştırıp doğrulayan bir hakemsin.', verifyPrompt, null, null, null, maxTokensOverride);
   return {
     text: verified.ok ? verified.text : successes[0].r.text,
     usedBy: successes.map(s => s.name),
@@ -2346,11 +2347,13 @@ document.getElementById('contentGenerateBtn').addEventListener('click', async ()
   const tone = document.getElementById('contentTone').value;
   const format = document.getElementById('contentFormat').value;
   const seriesName = document.getElementById('contentSeries').value.trim();
-  const limitValue = parseInt(document.getElementById('contentLimitValue').value, 10) || 0;
-  const limitUnit = document.getElementById('contentLimitUnit').value;
+  const wordTarget = Math.max(0, Math.min(10000, parseInt(document.getElementById('contentLimitValue').value, 10) || 0));
+  const doHashtagResearch = document.getElementById('contentHashtagResearch').checked;
+  const doImageGen = document.getElementById('contentImageGen').checked;
   const box = document.getElementById('contentResult');
+  const stage = document.getElementById('contentStage');
   if(!topic){ box.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Önce bir konu yaz ya da 🎲 ile öneri al.</p>'; return; }
-  box.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Etkin tüm modeller birlikte yazıyor, biri diğerini geliştiriyor...</p>';
+  box.innerHTML = ''; stage.textContent = 'PLAN';
 
   let seriesContext = '';
   let episodeNo = 1;
@@ -2362,40 +2365,65 @@ document.getElementById('contentGenerateBtn').addEventListener('click', async ()
       seriesContext = `\n\nBu bir serinin ${episodeNo}. bölümü ("${seriesName}"). Önceki bölümlerin konuları: ${prev.map((p,i)=>`Bölüm ${i+1}: ${p}`).join(' / ')}. Bunları tekrar etme, doğal bir devam gibi yaz, istersen kısaca referans ver.`;
     }
   }
-  const formatRules = {
-    'Makale': 'Tam, yayına hazır bir MAKALE — en az 700, en fazla 1000 kelime. Giriş, gelişme (alt başlıklarla bölünmüş) ve sonuç bölümleri olsun, yüzeysel geçme, konuyu gerçekten işle, somut örnekler ver. Yazının EN SONUNA mutlaka şunu ekle: "🔑 Anahtar Kelimeler: " başlığı altında konuyla en ilgili 6-10 SEO anahtar kelimesi (virgülle ayrılmış), ardından "Etiketler:" başlığı altında 5-8 hashtag.',
-    'LinkedIn': 'LinkedIn\'de okunması kolay kısa paragraflar, en az 150 en fazla 250 kelime, sonunda 5-8 ilgili hashtag.',
-    'Instagram': 'Instagram paylaşımı gibi enerjik, kısa cümleler, emoji kullanımı ölçülü, sonunda 8-15 hashtag.',
-    'X (Twitter)': 'X (Twitter) için tek bir gönderi, en fazla 280 karakter, vurucu ve net, sonunda 2-3 hashtag.',
-    'Blog yazısı': 'Blog yazısı formatında, alt başlıklarla bölünmüş, 400-600 kelime, giriş-gelişme-sonuç yapısında. Hashtag gerekmiyor.',
-    'E-posta': 'Profesyonel bir e-posta formatında, konu satırı önerisiyle başla, kısa ve net. Hashtag gerekmiyor.',
-    'Haber metni': 'Tarafsız bir haber dili, kim-ne-nerede-ne zaman-neden yapısında, 150-250 kelime. Hashtag gerekmiyor.'
-  };
-  const limitRule = limitValue ? `\n\nKESİN UZUNLUK SINIRI: Yazı TAM OLARAK ${limitValue} ${limitUnit}ı GEÇMEMELİ. Bu formatın kendi kuralından daha önceliklidir — gerekiyorsa hashtag sayısını azalt, ama sınırı asla aşma.` : '';
-  const sysPrompt = `Sen deneyimli bir İK profesyonelisin ve ${format} platformu için gerçek, samimi içerik üretiyorsun. Yapay zekâ tarafından yazılmış gibi hissettirmeyen, klişelerden uzak, gerçek bir insanın kendi tecrübesinden yazdığı gibi bir metin üret. Ton: ${tone}.
 
-FORMAT KURALI (${format}): ${formatRules[format] || ''}${limitRule}
+  let hashtagContext = '';
+  if(doHashtagResearch && (format === 'LinkedIn' || format === 'Instagram' || format === 'X (Twitter)' || format === 'Makale')){
+    stage.textContent = 'SEARCH — popüler etiketler araştırılıyor';
+    try{
+      const fcKey = document.getElementById('firecrawlKey').value.trim();
+      const snippets = await firecrawlSearch(`${topic} en popüler hashtag etiketler ${format}`, fcKey);
+      if(snippets) hashtagContext = `\n\nAşağıda bu konuda gerçekten kullanılan/popüler etiketlerle ilgili internet arama sonuçları var — hashtag seçerken KAFANDAN UYDURMAK yerine öncelikle burada gerçekten geçen, ilgili ve popüler olanları kullan, gerekirse bunlara az sayıda mantıklı ek yap:\n${snippets}`;
+    }catch(e){ /* arama başarısız olursa sessizce geç, model kendi bilgisiyle seçsin */ }
+  }
+
+  const formatRules = {
+    'Makale': `Tam, yayına hazır, GERÇEK bir insanın yazdığı hissi veren bir MAKALE. ${wordTarget ? `Hedef uzunluk: yaklaşık ${wordTarget} kelime — bu hedefe gerçekten ulaş, kısa kesme.` : 'En az 700 kelime.'} Giriş, gelişme (alt başlıklarla bölünmüş, birden fazla bölüm) ve sonuç olsun; yüzeysel geçme, somut örnekler, gerçekçi ayrıntılar, kişisel bir bakış açısı kat. Akıcı, sürükleyici, sıkmayan bir dille yaz — kalıp cümlelerden ("günümüzde", "bu bağlamda" gibi klişelerden) kaçın. Yazının EN SONUNA mutlaka şunu ekle: "🔑 Anahtar Kelimeler: " başlığı altında 6-10 SEO anahtar kelimesi, ardından "Etiketler:" başlığı altında gerçekten popüler/ilgili 5-10 hashtag.`,
+    'LinkedIn': `LinkedIn'de okunması kolay kısa paragraflar. ${wordTarget ? `Hedef: yaklaşık ${wordTarget} kelime.` : 'En az 150 en fazla 250 kelime.'} Sonunda gerçekten popüler 5-8 hashtag.`,
+    'Instagram': `Instagram paylaşımı gibi enerjik, kısa cümleler, emoji kullanımı ölçülü. ${wordTarget ? `Hedef: yaklaşık ${wordTarget} kelime.` : ''} Sonunda gerçekten popüler 8-15 hashtag.`,
+    'X (Twitter)': 'X (Twitter) için tek bir gönderi, en fazla 280 karakter, vurucu ve net, sonunda gerçekten popüler 2-3 hashtag.',
+    'Blog yazısı': `Blog yazısı formatında, alt başlıklarla bölünmüş. ${wordTarget ? `Hedef: yaklaşık ${wordTarget} kelime.` : '400-600 kelime.'} Giriş-gelişme-sonuç yapısında. Hashtag gerekmiyor.`,
+    'E-posta': 'Profesyonel bir e-posta formatında, konu satırı önerisiyle başla, kısa ve net. Hashtag gerekmiyor.',
+    'Haber metni': `Tarafsız bir haber dili, kim-ne-nerede-ne zaman-neden yapısında. ${wordTarget ? `Hedef: yaklaşık ${wordTarget} kelime.` : '150-250 kelime.'} Hashtag gerekmiyor.`
+  };
+  const sysPrompt = `Sen deneyimli bir İK profesyonelisin ve ${format} platformu için gerçek, samimi içerik üretiyorsun. Yapay zekâ tarafından yazılmış gibi hissettirmeyen, klişelerden uzak, gerçek bir insanın kendi tecrübesinden yazdığı gibi, akıcı ve okuyucuyu sıkmayan bir metin üret. Ton: ${tone}.
+
+FORMAT KURALI (${format}): ${formatRules[format] || ''}${hashtagContext}
 ${seriesContext}
 
-SADECE yazının kendisini ver — başlık, açıklama, tırnak işareti ya da "İşte yazın:" gibi ek bir şey ekleme.`;
+SADECE yazının kendisini ver — başlık öncesi açıklama, tırnak işareti ya da "İşte yazın:" gibi ek bir şey ekleme.`;
+  stage.textContent = 'WRITE — etkin modeller birlikte yazıyor';
   const attempts = [];
-  let result = await askCouncil(sysPrompt, `Konu: ${topic}`, null, null, attempts);
-  if(!result){ box.innerHTML = `<p style="font-size:12.5px;color:var(--danger);">Yazı oluşturulamadı.${describeAttempts(attempts).replace(/\n/g,'<br>')}</p>`; return; }
+  const estTokens = wordTarget ? Math.min(16000, Math.max(1500, Math.round(wordTarget * 1.8))) : 1800;
+  let result = await askCouncil(sysPrompt, `Konu: ${topic}`, null, null, attempts, null, false, estTokens);
+  if(!result){ stage.textContent=''; box.innerHTML = `<p style="font-size:12.5px;color:var(--danger);">Yazı oluşturulamadı.${describeAttempts(attempts).replace(/\n/g,'<br>')}</p>`; return; }
 
-  function countOf(text){ return limitUnit === 'kelime' ? text.trim().split(/\s+/).filter(Boolean).length : text.length; }
-  if(limitValue && countOf(result.text) > limitValue){
-    box.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Sınırı aştı, kısaltılıyor...</p>';
-    const shrink = await askFast('Metni anlamını koruyarak kısalt.', `Bu metni TAM OLARAK ${limitValue} ${limitUnit}ı geçmeyecek şekilde kısalt, anlamını ve tonunu koru:\n\n${result.text}`, null);
-    if(shrink) result = {...result, text: shrink.text};
-  }
-  const finalCount = countOf(result.text);
-  const overLimit = limitValue && finalCount > limitValue;
+  stage.textContent = 'DONE';
+  const wordCount = result.text.trim().split(/\s+/).filter(Boolean).length;
   const metaText = result.referee ? `Kaynaklar: ${result.usedBy.join(', ')} — birleştirip geliştiren: ${result.referee}` : result.usedBy.join(', ');
+  let imageHtml = '';
+  if(doImageGen){
+    box.innerHTML = `<p style="font-size:12.5px;color:var(--text-muted);">Yazı hazır, şimdi uygun bir görsel üretiliyor...</p>`;
+    stage.textContent = 'IMAGE — FLUX ile görsel üretiliyor';
+    try{
+      const seed = Math.floor(Math.random()*1000000);
+      const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(topic + ', professional, editorial illustration')}?width=1024&height=576&nologo=true&model=flux&seed=${seed}`;
+      const dataUrl = await new Promise((resolve, reject) => {
+        const img = new Image(); img.crossOrigin = 'anonymous';
+        img.onload = () => { const c = document.createElement('canvas'); c.width=img.width; c.height=img.height; c.getContext('2d').drawImage(img,0,0); try{ resolve(c.toDataURL('image/png')); }catch(e){ resolve(imgUrl); } };
+        img.onerror = () => reject(new Error('Görsel üretilemedi.'));
+        img.src = imgUrl;
+      });
+      imageHtml = `<img src="${dataUrl}" style="width:100%; border-radius:8px; margin-bottom:12px;">`;
+      saveToLibrary('icerik-gorsel-' + Date.now() + '.png', 'image/png', dataUrl);
+    }catch(e){ imageHtml = '<p style="font-size:11.5px;color:var(--text-faint);">(Görsel üretilemedi, yazı yine de hazır.)</p>'; }
+  }
+  stage.textContent = '';
   box.innerHTML = `
     <div class="file-card" style="align-items:flex-start;">
+      ${imageHtml}
       ${seriesName ? `<div class="fi-meta">${seriesName} — Bölüm ${episodeNo}</div>` : ''}
       <div style="white-space:pre-wrap; font-size:13.5px; line-height:1.6;">${result.text}</div>
-      <div class="fi-meta" style="margin-top:8px;">${metaText}${limitValue ? ` · ${finalCount}/${limitValue} ${limitUnit}` : ''}${overLimit ? ' <span style="color:var(--danger);">(sınır aşıldı)</span>' : ''}</div>
+      <div class="fi-meta" style="margin-top:8px;">${metaText} · ${wordCount} kelime${result.numericWarning ? ' · ⚠️ modeller arası sayı farkı' : ''}</div>
       <button id="contentCopyBtn" style="width:auto; margin-top:10px; padding:8px 14px;">Kopyala</button>
     </div>`;
   document.getElementById('contentCopyBtn').onclick = () => {
