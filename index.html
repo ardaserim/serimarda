@@ -371,7 +371,7 @@ textarea.memory-box{
     <div class="section-title">Tanı</div>
     <button class="small-btn" id="healthCheckBtn">🩺 Sistem Kontrolü</button>
     <div id="healthResult" style="margin-top:8px; font-size:11.5px;"></div>
-    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 43</p>
+    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 44</p>
   </aside>
 
   <main>
@@ -450,6 +450,11 @@ textarea.memory-box{
           <button id="jobAnalyzeBtn" style="width:100%; margin-top:10px; padding:10px; border-radius:6px; border:none; background:var(--accent); color:#16171A; font-weight:600; font-size:13px; cursor:pointer;">İlanları CV'ye göre sırala</button>
 
           <div id="jobResults" style="margin-top:18px; display:flex; flex-direction:column; gap:10px;"></div>
+
+          <div class="section-title" style="margin-top:32px;">🎯 Headhunter / İşe Alım Ajansları</div>
+          <p style="font-size:12.5px;color:var(--text-muted);margin:0 0 10px;">LinkedIn'deki bireysel headhunter profillerini otomatik okuyamıyoruz (LinkedIn bunu engelliyor) — onun yerine alanında/bölgende çalışan gerçek işe alım ajanslarını, kendi web sitelerinden bulur. Her birine ayrı, kişiselleştirilmiş bir tanıtım maili hazırlayabilirsin.</p>
+          <button id="headhunterSearchBtn" style="width:100%; padding:10px; border-radius:6px; border:none; background:var(--accent); color:#16171A; font-weight:600; font-size:13px; cursor:pointer;">Headhunter/Ajans ara</button>
+          <div id="headhunterResults" style="margin-top:14px; display:flex; flex-direction:column; gap:10px;"></div>
 
           <div class="section-title" style="margin-top:36px;">Başvurularım</div>
           <p style="font-size:12.5px;color:var(--text-muted);margin:0 0 10px;">Hangi firmaya, hangi aşamada olduğunu takip et.</p>
@@ -2110,12 +2115,12 @@ function loadFirecrawlKey(){
 document.getElementById('firecrawlKey').addEventListener('input', (e) => {
   localStorage.setItem('orc_firecrawl_key', e.target.value.trim());
 });
-async function firecrawlSearch(query, apiKey){
+async function firecrawlSearch(query, apiKey, limit){
   const headers = {'Content-Type':'application/json'};
   if(apiKey) headers['Authorization'] = 'Bearer ' + apiKey;
   const res = await fetch('https://api.firecrawl.dev/v2/search', {
     method:'POST', headers,
-    body: JSON.stringify({query, limit: 8})
+    body: JSON.stringify({query, limit: limit || 8})
   });
   const data = await res.json();
   if(!res.ok || data.success === false) throw new Error(data.error || res.statusText);
@@ -2211,6 +2216,57 @@ function renderJobResults(jobs, resultsBox){
     resultsBox.appendChild(card);
   });
 }
+const HEADHUNTER_EXTRACT_PROMPT = 'Sen bir kariyer danışmanısın. Sana arama kriterleri ve gerçek internet arama sonuçlarından alınmış kayıtlar verilecek. SADECE bu kayıtlarda gerçekten bir işe alım ajansı/headhunter/insan kaynakları danışmanlık firması olduğu anlaşılan, GERÇEK kayıtları kullan — kayıtlarda yer almayan hiçbir bilgiyi uydurma, iletişim bilgisi bulamazsan o alanı boş bırak. Her ajans için firma adı, uzmanlık alanı (varsa), web sitesi, (varsa) e-posta/iletişim sayfası linki çıkar. SADECE şu JSON formatında bir dizi döndür, başka hiçbir metin ekleme: [{"firma":"...", "uzmanlik":"...", "site":"https://...", "iletisim":"..."}] Kayıtlarda gerçek ajans yoksa boş dizi [] döndür.';
+document.getElementById('headhunterSearchBtn').addEventListener('click', async () => {
+  syncProvidersFromDOM();
+  const keywords = document.getElementById('jobKeywords').value.trim();
+  const location = document.getElementById('jobLocation').value.trim();
+  const box = document.getElementById('headhunterResults');
+  if(!keywords && !location){ box.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Üstteki "Kriterler" ve "Konum" alanlarını doldur.</p>'; return; }
+  box.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">İşe alım ajansları aranıyor...</p>';
+  const fcKey = document.getElementById('firecrawlKey').value.trim();
+  const queries = [
+    `${keywords} ${location} işe alım ajansı headhunter recruitment agency`,
+    `${keywords} ${location} İK danışmanlık firması insan kaynakları`,
+  ];
+  try{
+    const parts = await Promise.all(queries.map(q => firecrawlSearch(q, fcKey, 10).catch(() => '')));
+    const snippetText = parts.filter(Boolean).join('\n\n');
+    if(!snippetText){ box.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Sonuç bulunamadı.</p>'; return; }
+    const attempts = [];
+    const result = await askCouncil(HEADHUNTER_EXTRACT_PROMPT, `Kriterler: ${keywords}\nKonum: ${location}\n\nArama sonuçları:\n${snippetText}`, null, null, attempts, null, true);
+    if(!result){ box.innerHTML = `<p style="font-size:12.5px;color:var(--danger);">Analiz edilemedi.${describeAttempts(attempts).replace(/\n/g,'<br>')}</p>`; return; }
+    let agencies;
+    try{ agencies = JSON.parse(result.text.replace(/```json|```/g,'').trim()); }
+    catch(e){ box.innerHTML = `<p style="font-size:12.5px;color:var(--text-muted);">${result.text}</p>`; return; }
+    renderHeadhunterResults(agencies, box, keywords);
+  }catch(err){ box.innerHTML = `<p style="font-size:12.5px;color:var(--danger);">Arama başarısız: ${err.message}</p>`; }
+});
+function renderHeadhunterResults(agencies, box, keywords){
+  if(!Array.isArray(agencies) || agencies.length === 0){ box.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Ajans bulunamadı.</p>'; return; }
+  box.innerHTML = '';
+  agencies.forEach(a => {
+    const card = document.createElement('div');
+    card.className = 'file-card';
+    card.style.flexDirection = 'row'; card.style.alignItems = 'center'; card.style.gap = '12px';
+    card.innerHTML = `
+      <div style="flex:1;">
+        <div class="fi-name">${a.firma || '—'}</div>
+        <div class="fi-meta">${a.uzmanlik || ''}</div>
+        ${a.site ? `<a href="${a.site}" target="_blank" rel="noopener" style="font-size:11px; color:var(--accent-2);">Siteye git ↗</a>` : ''}
+        ${a.iletisim ? `<div class="fi-meta" style="margin-top:2px;">${a.iletisim}</div>` : ''}
+      </div>
+      <button style="width:auto; padding:8px 12px;">Bu ajansa yaz</button>`;
+    card.querySelector('button').onclick = () => {
+      document.querySelector('.navitem[data-tab="chat"]').click();
+      const composer = document.getElementById('composerInput');
+      composer.value = `${a.firma || 'Bu ajans'}a, ${keywords || 'uygun pozisyonlar'} konusunda kendimi tanıtan, CV'mi ekleyeceğimi belirten kısa ve profesyonel bir tanıtım maili yaz.`;
+      composer.dispatchEvent(new Event('input'));
+      composer.focus();
+    };
+    box.appendChild(card);
+  });
+}
 async function callGeminiSearch(p, systemPrompt, userText){
   try{
     const url = `${p.baseUrl}/${p.model}:generateContent?key=${p.key}`;
@@ -2237,13 +2293,20 @@ document.getElementById('jobSearchBtn').addEventListener('click', async () => {
   const resultsBox = document.getElementById('jobResults');
   if(!keywords && !location){ resultsBox.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Anahtar kelime ya da konum gir.</p>'; return; }
   const fcKey = document.getElementById('firecrawlKey').value.trim();
-  const query = `${keywords} ${location} iş ilanı job vacancy hiring`.trim();
+  const baseQ = `${keywords} ${location}`.trim();
+  const queries = [
+    `${baseQ} iş ilanı job vacancy hiring`,
+    `${baseQ} site:linkedin.com/jobs`,
+    `${baseQ} site:kariyer.net`,
+    `${baseQ} site:indeed.com OR site:glassdoor.com`,
+  ];
 
-  resultsBox.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Firecrawl ile internette aranıyor (ücretsiz)...</p>';
+  resultsBox.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Firecrawl ile birden fazla kaynakta aranıyor (ücretsiz)...</p>';
   let snippetText = '';
   let firecrawlFailed = false;
   try{
-    snippetText = await firecrawlSearch(query, fcKey);
+    const parts = await Promise.all(queries.map(q => firecrawlSearch(q, fcKey, 12).catch(() => '')));
+    snippetText = parts.filter(Boolean).join('\n\n');
   }catch(err){
     firecrawlFailed = true;
     var firecrawlErrMsg = err.message;
@@ -2252,8 +2315,8 @@ document.getElementById('jobSearchBtn').addEventListener('click', async () => {
   if(!firecrawlFailed){
     if(!snippetText){ resultsBox.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">İnternette eşleşen ilan bulunamadı.</p>'; return; }
     const attempts = [];
-    const promptText = `CV özeti:\n${cv || '(belirtilmedi)'}\n\nAranan pozisyon/kriterler: ${keywords || '(belirtilmedi)'}\nKonum: ${location || '(belirtilmedi)'}\n\nİnternet arama sonuçları:\n${snippetText}`;
-    const result = await askCouncil(JOB_EXTRACT_FROM_SNIPPETS_PROMPT, promptText, null, null, attempts, null, true);
+    const promptText = `CV özeti:\n${cv || '(belirtilmedi)'}\n\nAranan pozisyon/kriterler: ${keywords || '(belirtilmedi)'}\nKonum: ${location || '(belirtilmedi)'}\n\nİnternet arama sonuçları (birden fazla kaynaktan birleştirilmiş):\n${snippetText}\n\nÖNEMLİ: Sonuçlardaki TÜM gerçek, birbirinden farklı ilanları çıkar — atlamadan, mümkün olduğunca çok tane (bulabildiğin kadar, en az 10-15 hedefle), aynı ilanı tekrar etme.`;
+    const result = await askCouncil(JOB_EXTRACT_FROM_SNIPPETS_PROMPT, promptText, null, null, attempts, null, true, 4000);
     if(!result){ resultsBox.innerHTML = `<p style="font-size:12.5px;color:var(--danger);">Sonuçlar analiz edilemedi.${describeAttempts(attempts).replace(/\n/g,'<br>')}</p>`; return; }
     let jobs;
     try{ jobs = JSON.parse(result.text.replace(/```json|```/g,'').trim()); }
