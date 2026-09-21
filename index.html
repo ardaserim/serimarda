@@ -355,7 +355,7 @@ textarea.memory-box{
     <div class="section-title">Tanı</div>
     <button class="small-btn" id="healthCheckBtn">🩺 Sistem Kontrolü</button>
     <div id="healthResult" style="margin-top:8px; font-size:11.5px;"></div>
-    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 39</p>
+    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 40</p>
   </aside>
 
   <main>
@@ -1513,8 +1513,8 @@ async function callProviderSmart(p, systemPrompt, userText, imageDataUrl, histor
     return r;
   }catch(e){ return r; }
 }
-async function askFast(systemPrompt, userText, log, imageDataUrl, attemptsOut, history, onChunk){
-  const active = providers.filter(p => p.enabled && p.key && (!imageDataUrl || p.vision));
+async function askFast(systemPrompt, userText, log, imageDataUrl, attemptsOut, history, onChunk, freeOnly){
+  const active = providers.filter(p => p.enabled && p.key && (!imageDataUrl || p.vision) && (!freeOnly || p.free || p.local));
   for(const p of active){
     log && log(`${p.name} deneniyor...`);
     const r = await callProviderSmart(p, systemPrompt, userText, imageDataUrl, history, onChunk);
@@ -1548,8 +1548,8 @@ function numbersDiffer(successes){
   }
   return false;
 }
-async function askCouncil(systemPrompt, userText, log, imageDataUrl, attemptsOut, history){
-  const active = providers.filter(p => p.enabled && p.key && (!imageDataUrl || p.vision));
+async function askCouncil(systemPrompt, userText, log, imageDataUrl, attemptsOut, history, freeOnly){
+  const active = providers.filter(p => p.enabled && p.key && (!imageDataUrl || p.vision) && (!freeOnly || p.free || p.local));
   if(active.length === 0) return null;
   if(active.length === 1){
     const r = await callProviderSmart(active[0], systemPrompt, userText, imageDataUrl, history);
@@ -2207,7 +2207,7 @@ document.getElementById('jobSearchBtn').addEventListener('click', async () => {
     if(!snippetText){ resultsBox.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">İnternette eşleşen ilan bulunamadı.</p>'; return; }
     const attempts = [];
     const promptText = `CV özeti:\n${cv || '(belirtilmedi)'}\n\nAranan pozisyon/kriterler: ${keywords || '(belirtilmedi)'}\nKonum: ${location || '(belirtilmedi)'}\n\nİnternet arama sonuçları:\n${snippetText}`;
-    const result = await askCouncil(JOB_EXTRACT_FROM_SNIPPETS_PROMPT, promptText, null, null, attempts);
+    const result = await askCouncil(JOB_EXTRACT_FROM_SNIPPETS_PROMPT, promptText, null, null, attempts, null, true);
     if(!result){ resultsBox.innerHTML = `<p style="font-size:12.5px;color:var(--danger);">Sonuçlar analiz edilemedi.${describeAttempts(attempts).replace(/\n/g,'<br>')}</p>`; return; }
     let jobs;
     try{ jobs = JSON.parse(result.text.replace(/```json|```/g,'').trim()); }
@@ -2216,14 +2216,12 @@ document.getElementById('jobSearchBtn').addEventListener('click', async () => {
     return;
   }
 
-  // Firecrawl tamamen erişilemezse (ör. ağ engeli): Gemini grounding / Perplexity yedeği
+  // Firecrawl tamamen erişilemezse (ör. ağ engeli): Gemini grounding yedeği (ücretsiz)
   const fcNote = `<p style="font-size:12.5px;color:var(--text-muted);">Firecrawl başarısız oldu: ${firecrawlErrMsg} — yedek yönteme geçiliyor...</p>`;
   const geminiP = providers.find(p => p.id === 'gemini' && p.enabled && p.key);
-  const perplexityP = providers.find(p => p.id === 'perplexity' && p.enabled && p.key);
-  if(!geminiP && !perplexityP){ resultsBox.innerHTML = fcNote + '<p style="font-size:12.5px;color:var(--danger);">Yedek olarak Gemini ya da Perplexity de etkin değil.</p>'; return; }
+  if(!geminiP){ resultsBox.innerHTML = fcNote + '<p style="font-size:12.5px;color:var(--danger);">Yedek olarak Gemini de etkin değil — sol menüden Gemini\'yi (ücretsiz) etkinleştir.</p>'; return; }
   const promptText2 = `CV özeti:\n${cv || '(belirtilmedi)'}\n\nAranan pozisyon/kriterler: ${keywords || '(belirtilmedi)'}\nKonum: ${location || '(belirtilmedi)'}`;
-  let r = geminiP ? await callGeminiSearch(geminiP, JOB_SEARCH_SYSTEM_PROMPT, promptText2) : null;
-  if((!r || !r.ok) && perplexityP) r = await callProviderSmart(perplexityP, JOB_SEARCH_SYSTEM_PROMPT, promptText2);
+  let r = await callGeminiSearch(geminiP, JOB_SEARCH_SYSTEM_PROMPT, promptText2);
   if(!r || !r.ok){ resultsBox.innerHTML = fcNote + `<p style="font-size:12.5px;color:var(--danger);">Yedek arama da başarısız: ${r ? r.error : 'bilinmeyen hata'}</p>`; return; }
   let jobs2;
   try{ jobs2 = JSON.parse(r.text.replace(/```json|```/g,'').trim()); }
@@ -2241,7 +2239,7 @@ document.getElementById('jobAnalyzeBtn').addEventListener('click', async () => {
   resultsBox.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Analiz ediliyor...</p>';
   const attempts = [];
   const promptText = `CV özeti:\n${cv || '(belirtilmedi)'}\n\nKriterler: ${keywords || '(belirtilmedi)'}\n\nİlan metni:\n${listings}`;
-  const result = await askCouncil(JOB_MATCH_SYSTEM_PROMPT, promptText, null, null, attempts);
+  const result = await askCouncil(JOB_MATCH_SYSTEM_PROMPT, promptText, null, null, attempts, null, true);
   if(!result){ resultsBox.innerHTML = `<p style="font-size:12.5px;color:var(--danger);">Analiz edilemedi.${describeAttempts(attempts).replace(/\n/g,'<br>')}</p>`; return; }
   let jobs;
   try{ jobs = JSON.parse(result.text.replace(/```json|```/g,'').trim()); }
