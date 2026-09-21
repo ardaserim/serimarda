@@ -371,7 +371,7 @@ textarea.memory-box{
     <div class="section-title">Tanı</div>
     <button class="small-btn" id="healthCheckBtn">🩺 Sistem Kontrolü</button>
     <div id="healthResult" style="margin-top:8px; font-size:11.5px;"></div>
-    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 44</p>
+    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 46</p>
   </aside>
 
   <main>
@@ -484,6 +484,14 @@ textarea.memory-box{
             <button class="mode-btn task-filter" data-filter="done">Tamamlanan</button>
           </div>
           <div id="taskList" style="margin-top:14px; display:flex; flex-direction:column; gap:8px;"></div>
+
+          <div class="section-title" style="margin-top:32px;">✈️ Uçuş Takibi</div>
+          <p style="font-size:12.5px;color:var(--text-muted);margin:0 0 10px;">Bir uçuş numarasını takibe al — her uygulamayı açtığında ya da "Şimdi kontrol et" dediğinde o anki durumu arayıp kaydeder, zamanla bir geçmiş oluşur. Gerçek zamanlı arka plan takibi değildir — sadece kontrol ettiğin anlardaki gerçek arama sonucudur.</p>
+          <div style="display:flex; gap:8px;">
+            <input id="flightNumberInput" placeholder="Uçuş no — örn: GF13" style="flex:1; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:12.5px;">
+            <button class="small-btn" id="flightAddBtn" style="max-width:120px; border-color:var(--accent); color:var(--accent);">+ Takibe al</button>
+          </div>
+          <div id="flightWatchList" style="margin-top:14px; display:flex; flex-direction:column; gap:10px;"></div>
 
           <div class="section-title" style="margin-top:32px;">Prompt Kütüphanesi</div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -1003,7 +1011,7 @@ document.querySelectorAll('.navitem').forEach(t => t.addEventListener('click', (
   document.getElementById('panel-docs').hidden = which !== 'docs';
   if(which === 'files'){ renderFiles(); renderSentLog(); }
   if(which === 'jobs'){ renderApps(); renderCompanies(); }
-  if(which === 'tasks'){ renderNotifications(); renderTasks(); renderPrompts(); }
+  if(which === 'tasks'){ renderNotifications(); renderTasks(); renderPrompts(); renderFlightWatchList(); }
   if(which === 'news'){ renderDashboard(); }
 }));
 
@@ -2108,7 +2116,7 @@ function syncProvidersFromDOM(){
 /* ---------------- İş İlanları ---------------- */
 const JOB_MATCH_SYSTEM_PROMPT = 'Sen bir kariyer danışmanısın. Sana bir CV özeti, arama kriterleri ve içinde birden fazla iş ilanı olabilecek bir metin verilecek. Metindeki HER ilanı ayrı ayrı incele: şirket adı, pozisyon, lokasyon bilgilerini çıkar; CV ve kriterlere göre 1-10 arası bir uygunluk puanı ver; puanın gerekçesini tek cümlede özetle. SADECE şu JSON formatında bir dizi döndür, başka hiçbir metin ekleme: [{"sirket":"...", "pozisyon":"...", "lokasyon":"...", "puan":0, "gerekce":"..."}] En yüksek puanlıdan en düşüğe sırala. İlan bulamazsan boş dizi [] döndür.';
 const JOB_SEARCH_SYSTEM_PROMPT = 'Sen internet üzerinden gerçek, güncel iş ilanı arayan bir kariyer danışmanısın. Kullanıcının verdiği pozisyon, konum ve kriterlere göre interneti ara, gerçekten var olan ve hâlâ açık görünen ilanları bul. Her ilan için şirket adı, pozisyon, lokasyon, ilan/son başvuru tarihi (varsa), ilanın bulunduğu sayfanın gerçek URL\'i, CV\'ye göre 1-10 uygunluk puanı ve tek cümlelik gerekçe çıkar. Emin olmadığın, uydurma veya kaynağı belirsiz ilanları asla ekleme — sadece gerçekten bulduğun, kaynağı olan ilanları listele. SADECE şu JSON formatında bir dizi döndür, başka hiçbir metin ekleme: [{"sirket":"...", "pozisyon":"...", "lokasyon":"...", "tarih":"...", "kaynak":"https://...", "puan":0, "gerekce":"..."}] En yüksek puanlıdan en düşüğe sırala. Hiç ilan bulamazsan boş dizi [] döndür.';
-const JOB_EXTRACT_FROM_SNIPPETS_PROMPT = 'Sen bir kariyer danışmanısın. Sana CV özeti, arama kriterleri ve gerçek internet arama sonuçlarından alınmış başlık/link/açıklama kayıtları verilecek. SADECE bu kayıtlarda gerçekten iş ilanı olduğu anlaşılanları kullan — kayıtlarda yer almayan hiçbir bilgiyi uydurma, tarih veya şirket bulamazsan o alanı boş bırak. Her ilan için şirket adı, pozisyon, lokasyon, (varsa) tarih, kaynak URL, CV\'ye göre 1-10 uygunluk puanı ve tek cümlelik gerekçe çıkar. SADECE şu JSON formatında bir dizi döndür, başka hiçbir metin ekleme: [{"sirket":"...", "pozisyon":"...", "lokasyon":"...", "tarih":"...", "kaynak":"https://...", "puan":0, "gerekce":"..."}] En yüksek puanlıdan en düşüğe sırala. Kayıtlarda gerçek ilan yoksa boş dizi [] döndür.';
+const JOB_EXTRACT_FROM_SNIPPETS_PROMPT = 'Sen bir kariyer danışmanısın. Sana CV özeti, arama kriterleri ve "İNTERNET ARAMA SONUÇLARI" başlığı altında gerçek arama kayıtları verilecek. ÇOK ÖNEMLİ KURALLAR: (1) İlan listesi SADECE "İNTERNET ARAMA SONUÇLARI" bölümünden çıkarılır — CV özeti SADECE kullanıcının geçmiş/mevcut iş deneyimini anlamak içindir, ASLA bir ilan kaynağı değildir. (2) CV\'de geçen hiçbir şirketi (kullanıcının kendi çalıştığı/çalıştığı yerler) bir iş ilanı olarak ASLA listeleme — bu ciddi bir hata sayılır. (3) Arama sonuçlarında gerçekten iş ilanı olduğu anlaşılanları kullan, kayıtlarda yer almayan hiçbir bilgiyi uydurma, tarih veya şirket bulamazsan o alanı boş bırak. (4) Arama sonuçlarında bulduğun TÜM gerçek, birbirinden farklı ilanları çıkar (aynı ilanı iki kez yazma, ama sayıyı doldurmak için de ASLA uydurma ilan ekleme — bulduğun kadarı yeterli, az da olabilir çok da). Her ilan için şirket adı, pozisyon, lokasyon, (varsa) tarih, kaynak URL, CV\'ye göre 1-10 uygunluk puanı ve tek cümlelik gerekçe çıkar. SADECE şu JSON formatında bir dizi döndür, başka hiçbir metin ekleme: [{"sirket":"...", "pozisyon":"...", "lokasyon":"...", "tarih":"...", "kaynak":"https://...", "puan":0, "gerekce":"..."}] En yüksek puanlıdan en düşüğe sırala. Arama sonuçlarında gerçek ilan yoksa boş dizi [] döndür.';
 function loadFirecrawlKey(){
   document.getElementById('firecrawlKey').value = localStorage.getItem('orc_firecrawl_key') || '';
 }
@@ -2299,13 +2307,15 @@ document.getElementById('jobSearchBtn').addEventListener('click', async () => {
     `${baseQ} site:linkedin.com/jobs`,
     `${baseQ} site:kariyer.net`,
     `${baseQ} site:indeed.com OR site:glassdoor.com`,
+    `${baseQ} site:secretcv.com OR site:yenibiris.com`,
+    `${baseQ} açık pozisyon başvuru`,
   ];
 
   resultsBox.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Firecrawl ile birden fazla kaynakta aranıyor (ücretsiz)...</p>';
   let snippetText = '';
   let firecrawlFailed = false;
   try{
-    const parts = await Promise.all(queries.map(q => firecrawlSearch(q, fcKey, 12).catch(() => '')));
+    const parts = await Promise.all(queries.map(q => firecrawlSearch(q, fcKey, 15).catch(() => '')));
     snippetText = parts.filter(Boolean).join('\n\n');
   }catch(err){
     firecrawlFailed = true;
@@ -2315,12 +2325,19 @@ document.getElementById('jobSearchBtn').addEventListener('click', async () => {
   if(!firecrawlFailed){
     if(!snippetText){ resultsBox.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">İnternette eşleşen ilan bulunamadı.</p>'; return; }
     const attempts = [];
-    const promptText = `CV özeti:\n${cv || '(belirtilmedi)'}\n\nAranan pozisyon/kriterler: ${keywords || '(belirtilmedi)'}\nKonum: ${location || '(belirtilmedi)'}\n\nİnternet arama sonuçları (birden fazla kaynaktan birleştirilmiş):\n${snippetText}\n\nÖNEMLİ: Sonuçlardaki TÜM gerçek, birbirinden farklı ilanları çıkar — atlamadan, mümkün olduğunca çok tane (bulabildiğin kadar, en az 10-15 hedefle), aynı ilanı tekrar etme.`;
-    const result = await askCouncil(JOB_EXTRACT_FROM_SNIPPETS_PROMPT, promptText, null, null, attempts, null, true, 4000);
+    const promptText = `[KULLANICININ KENDİ CV ÖZETİ — SADECE BAĞLAM İÇİN, BU BİR İLAN KAYNAĞI DEĞİLDİR, BURADAKİ ŞİRKETLERİ ASLA İLAN OLARAK LİSTELEME]:\n${cv || '(belirtilmedi)'}\n\nAranan pozisyon/kriterler: ${keywords || '(belirtilmedi)'}\nKonum: ${location || '(belirtilmedi)'}\n\n=== İNTERNET ARAMA SONUÇLARI (İLANLAR SADECE BURADAN ÇIKARILACAK) ===\n${snippetText}\n=== ARAMA SONUÇLARI SONU ===\n\nYukarıdaki arama sonuçlarında bulduğun TÜM gerçek, birbirinden farklı ilanları çıkar — atlamadan. Ne kadar çok gerçek ilan bulursan o kadar iyi (10, 30, hatta 100 olabilir), ama SAYIYI DOLDURMAK İÇİN TEK BİR TANESİNİ BİLE UYDURMA — sadece arama sonuçlarında gerçekten var olanları listele.`;
+    const result = await askCouncil(JOB_EXTRACT_FROM_SNIPPETS_PROMPT, promptText, null, null, attempts, null, true, 6000);
     if(!result){ resultsBox.innerHTML = `<p style="font-size:12.5px;color:var(--danger);">Sonuçlar analiz edilemedi.${describeAttempts(attempts).replace(/\n/g,'<br>')}</p>`; return; }
     let jobs;
     try{ jobs = JSON.parse(result.text.replace(/```json|```/g,'').trim()); }
     catch(e){ resultsBox.innerHTML = `<p style="font-size:12.5px;color:var(--text-muted);">${result.text}</p>`; return; }
+    if(Array.isArray(jobs) && cv){
+      const cvLower = cv.toLowerCase();
+      jobs = jobs.filter(j => {
+        const name = (j.sirket || '').trim().toLowerCase();
+        return name.length < 3 || !cvLower.includes(name);
+      });
+    }
     renderJobResults(jobs, resultsBox);
     return;
   }
@@ -3116,6 +3133,72 @@ document.getElementById('taskAddBtn').addEventListener('click', () => {
   nsSet('serimarda.tasks', tasks);
   renderTasks(); renderNotifications();
 });
+/* ---------------- Uçuş Takibi ---------------- */
+document.getElementById('flightAddBtn').addEventListener('click', () => {
+  const num = document.getElementById('flightNumberInput').value.trim().toUpperCase();
+  if(!num){ addSysNote('Önce bir uçuş numarası yaz.', true); return; }
+  const watches = nsGet('serimarda.flightWatch', []);
+  if(watches.find(w => w.number === num)){ addSysNote('Bu uçuş zaten takip listende.', true); return; }
+  watches.push({number: num, addedAt: Date.now(), history: []});
+  nsSet('serimarda.flightWatch', watches);
+  document.getElementById('flightNumberInput').value = '';
+  renderFlightWatchList();
+  checkFlightNow(num);
+});
+async function checkFlightNow(num){
+  const watches = nsGet('serimarda.flightWatch', []);
+  const w = watches.find(x => x.number === num);
+  if(!w) return;
+  renderFlightWatchList(num + '-checking');
+  try{
+    const fcKey = document.getElementById('firecrawlKey').value.trim();
+    const todayStr = new Date().toLocaleDateString('tr-TR');
+    const snippets = await firecrawlSearch(`${num} flight status uçuş durumu ${todayStr}`, fcKey, 8);
+    if(!snippets){
+      w.history.unshift({at: Date.now(), status: 'Arama sonucu bulunamadı.'});
+    } else {
+      const r = await askFast('Sen bir uçuş durumu özetleyicisisin. Sana bir uçuş numarası ve gerçek internet arama sonuçları verilecek. SADECE bu sonuçlarda gerçekten bulunan bilgiyi kullan — kalkış saati, gecikme durumu, gerçek durum (zamanında/gecikmeli/iptal) bulabilirsen kısa (1-2 cümle) özetle. Sonuçlarda net bir bilgi yoksa "Bu arama sonuçlarında net bir uçuş durumu bulunamadı" de, ASLA tahmin/uydurma yapma.', `Uçuş: ${num}\n\nArama sonuçları:\n${snippets}`);
+      w.history.unshift({at: Date.now(), status: r ? r.text : 'Kontrol edilemedi.'});
+    }
+  }catch(e){
+    w.history.unshift({at: Date.now(), status: 'Arama başarısız: ' + e.message});
+  }
+  if(w.history.length > 60) w.history = w.history.slice(0,60);
+  nsSet('serimarda.flightWatch', watches);
+  renderFlightWatchList();
+}
+function renderFlightWatchList(checkingNum){
+  const box = document.getElementById('flightWatchList');
+  if(!box) return;
+  const watches = nsGet('serimarda.flightWatch', []);
+  if(watches.length === 0){ box.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Henüz takip edilen uçuş yok.</p>'; return; }
+  box.innerHTML = '';
+  watches.forEach(w => {
+    const card = document.createElement('div');
+    card.className = 'file-card'; card.style.alignItems = 'flex-start';
+    const isChecking = checkingNum === w.number + '-checking';
+    const recent = w.history.slice(0,5);
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+        <div class="fi-name">✈️ ${w.number}</div>
+        <div style="display:flex; gap:6px;">
+          <button data-a="check" style="width:auto;padding:6px 10px;" ${isChecking?'disabled':''}>${isChecking ? 'Kontrol ediliyor...' : 'Şimdi kontrol et'}</button>
+          <button data-a="del" style="width:auto;padding:6px 10px;">Sil</button>
+        </div>
+      </div>
+      <div style="margin-top:8px; width:100%; display:flex; flex-direction:column; gap:4px;">
+        ${recent.length ? recent.map(h => `<div class="fi-meta">${new Date(h.at).toLocaleString('tr-TR')} — ${h.status}</div>`).join('') : '<div class="fi-meta">Henüz kontrol edilmedi.</div>'}
+      </div>
+      ${w.history.length > 5 ? `<div class="fi-meta" style="margin-top:4px; opacity:.7;">+ ${w.history.length - 5} eski kayıt daha</div>` : ''}`;
+    card.querySelector('[data-a=check]').onclick = () => checkFlightNow(w.number);
+    card.querySelector('[data-a=del]').onclick = () => {
+      const all = nsGet('serimarda.flightWatch', []).filter(x => x.number !== w.number);
+      nsSet('serimarda.flightWatch', all);
+      renderFlightWatchList();
+    };
+    box.appendChild(card);
+  });
+}
 function renderTasks(){
   const tasks = nsGet('serimarda.tasks', []);
   const todayStr = new Date().toISOString().slice(0,10);
