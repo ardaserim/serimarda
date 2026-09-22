@@ -400,7 +400,7 @@ textarea.memory-box:focus{outline:none; border-color:var(--accent); box-shadow:0
     <div class="section-title">Tanı</div>
     <button class="small-btn" id="healthCheckBtn">🩺 Sistem Kontrolü</button>
     <div id="healthResult" style="margin-top:8px; font-size:11.5px;"></div>
-    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 56</p>
+    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 58</p>
   </aside>
 
   <main>
@@ -860,7 +860,6 @@ const PRESETS = [
   // --- ücretsiz başlayanlar (tarayıcıdan doğrudan çağrılabilenler) ---
   {id:'gemini', name:'Google — Gemini', format:'gemini', baseUrl:'https://generativelanguage.googleapis.com/v1beta/models', model:'gemini-3.6-flash', vision:true, free:true},
   {id:'mistral', name:'Mistral', format:'openai', baseUrl:'https://api.mistral.ai/v1/chat/completions', model:'mistral-large-latest', vision:false, free:true},
-  {id:'github', name:'GitHub Copilot Models', format:'openai', baseUrl:'https://models.github.ai/inference/chat/completions', model:'openai/gpt-4o', vision:false, free:true, unverifiedCors:true},
   {id:'qwen', name:'Qwen (Alibaba)', format:'openai', baseUrl:'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions', model:'qwen-plus', vision:false, free:true, unverifiedCors:true},
   {id:'moonshot', name:'Moonshot — Kimi', format:'openai', baseUrl:'https://api.moonshot.cn/v1/chat/completions', model:'moonshot-v1-8k', vision:false, free:true, unverifiedCors:true},
   {id:'yi', name:'01.AI — Yi', format:'openai', baseUrl:'https://api.lingyiwanwu.com/v1/chat/completions', model:'yi-large', vision:false, free:true, unverifiedCors:true},
@@ -2427,17 +2426,47 @@ document.getElementById('jobSearchBtn').addEventListener('click', async () => {
     return;
   }
 
-  // Firecrawl tamamen erişilemezse (ör. ağ engeli): Gemini grounding yedeği (ücretsiz)
-  const fcNote = `<p style="font-size:12.5px;color:var(--text-muted);">Firecrawl başarısız oldu: ${firecrawlErrMsg} — yedek yönteme geçiliyor...</p>`;
+  // Firecrawl tamamen erişilemezse: önce basit bir tekrar dene, sonra sırayla gerçek arama yapabilen modelleri (Gemini, Perplexity) dene
+  const fcNote = `<p style="font-size:12.5px;color:var(--text-muted);">Firecrawl başarısız oldu: ${firecrawlErrMsg} — yedek yöntemler deneniyor...</p>`;
+  resultsBox.innerHTML = fcNote;
+  const promptText2 = `CV özeti:\n${cv || '(belirtilmedi)'}\n\nAranan pozisyon/kriterler: ${keywords || '(belirtilmedi)'}\nSeviye: ${level || '(belirtilmedi)'}\nKonum: ${location || '(belirtilmedi)'}`;
+
+  // 1) Firecrawl'u tek, basit bir sorguyla tekrar dene
+  try{
+    const retrySnippets = await firecrawlSearch(baseQ + ' iş ilanı', fcKey, 10);
+    if(retrySnippets){
+      const attempts2 = [];
+      const result2 = await askCouncil(JOB_EXTRACT_FROM_SNIPPETS_PROMPT, promptText2 + `\n\n=== İNTERNET ARAMA SONUÇLARI ===\n${retrySnippets}`, null, null, attempts2, null, true, 6000);
+      if(result2){
+        try{ let jobsRetry = JSON.parse(result2.text.replace(/```json|```/g,'').trim()); renderJobResults(jobsRetry, resultsBox); return; }catch(e){}
+      }
+    }
+  }catch(e){}
+
+  // 2) Gemini'nin kendi arama motoru (ücretsiz)
+  const fallbackAttempts = [];
   const geminiP = providers.find(p => p.id === 'gemini' && p.enabled && p.key);
-  if(!geminiP){ resultsBox.innerHTML = fcNote + '<p style="font-size:12.5px;color:var(--danger);">Yedek olarak Gemini de etkin değil — sol menüden Gemini\'yi (ücretsiz) etkinleştir.</p>'; return; }
-  const promptText2 = `CV özeti:\n${cv || '(belirtilmedi)'}\n\nAranan pozisyon/kriterler: ${keywords || '(belirtilmedi)'}\nKonum: ${location || '(belirtilmedi)'}`;
-  let r = await callGeminiSearch(geminiP, JOB_SEARCH_SYSTEM_PROMPT, promptText2);
-  if(!r || !r.ok){ resultsBox.innerHTML = fcNote + `<p style="font-size:12.5px;color:var(--danger);">Yedek arama da başarısız: ${r ? r.error : 'bilinmeyen hata'}</p>`; return; }
-  let jobs2;
-  try{ jobs2 = JSON.parse(r.text.replace(/```json|```/g,'').trim()); }
-  catch(e){ resultsBox.innerHTML = fcNote + `<p style="font-size:12.5px;color:var(--text-muted);">${r.text}</p>`; return; }
-  renderJobResults(jobs2, resultsBox);
+  if(geminiP){
+    const r = await callGeminiSearch(geminiP, JOB_SEARCH_SYSTEM_PROMPT, promptText2);
+    if(r && r.ok){
+      try{ const jobs2 = JSON.parse(r.text.replace(/```json|```/g,'').trim()); renderJobResults(jobs2, resultsBox); return; }
+      catch(e){ resultsBox.innerHTML = fcNote + `<p style="font-size:12.5px;color:var(--text-muted);">${r.text}</p>`; return; }
+    }
+    fallbackAttempts.push(`Gemini: ${r ? r.error : 'bilinmeyen hata'}`);
+  } else fallbackAttempts.push('Gemini etkin değil');
+
+  // 3) Perplexity — gerçek arama yapabilen, eğer kullanıcı etkinleştirmişse (ücretli olabilir)
+  const perplexityP = providers.find(p => p.id === 'perplexity' && p.enabled && p.key);
+  if(perplexityP){
+    const r = await callProviderSmart(perplexityP, JOB_SEARCH_SYSTEM_PROMPT, promptText2);
+    if(r.ok){
+      try{ const jobs3 = JSON.parse(r.text.replace(/```json|```/g,'').trim()); renderJobResults(jobs3, resultsBox); return; }
+      catch(e){ resultsBox.innerHTML = fcNote + `<p style="font-size:12.5px;color:var(--text-muted);">${r.text}</p>`; return; }
+    }
+    fallbackAttempts.push(`Perplexity: ${r.error}`);
+  }
+
+  resultsBox.innerHTML = fcNote + `<p style="font-size:12.5px;color:var(--danger);">Tüm yedek yöntemler de başarısız:<br>${fallbackAttempts.join('<br>')}</p><p style="font-size:11.5px;color:var(--text-faint); margin-top:6px;">Firecrawl'un kendi ücretsiz kotası (ayda 1000 arama) muhtemelen dolmuş olabilir — birkaç saat sonra tekrar dene, ya da firecrawl.dev'den kendi anahtarını alıp yukarıdaki kutuya ekle.</p>`;
 });
 
 document.getElementById('jobAnalyzeBtn').addEventListener('click', async () => {
