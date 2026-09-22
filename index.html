@@ -400,7 +400,7 @@ textarea.memory-box:focus{outline:none; border-color:var(--accent); box-shadow:0
     <div class="section-title">Tanı</div>
     <button class="small-btn" id="healthCheckBtn">🩺 Sistem Kontrolü</button>
     <div id="healthResult" style="margin-top:8px; font-size:11.5px;"></div>
-    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 58</p>
+    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 59</p>
   </aside>
 
   <main>
@@ -470,6 +470,14 @@ textarea.memory-box:focus{outline:none; border-color:var(--accent); box-shadow:0
 
           <div class="field" style="margin-top:14px;"><label>Seviye / unvan (opsiyonel — sonuçlar buna göre gruplanır)</label></div>
           <input id="jobLevel" class="memory-box" style="min-height:auto; padding:9px;" placeholder="Örn: Uzman, Şef, Müdür, Direktör — boş bırakırsan hepsi gösterilir">
+
+          <div class="field" style="margin-top:14px;"><label>Güncellik</label></div>
+          <select id="jobRecency" style="width:100%; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:9px; border-radius:7px; font-size:12.5px; font-family:inherit;">
+            <option value="week">Son 1 hafta (önerilen)</option>
+            <option value="day">Son 24 saat</option>
+            <option value="month">Son 1 ay</option>
+            <option value="any">Fark etmez</option>
+          </select>
 
           <div class="field" style="margin-top:14px;"><label>Konum / ülke (internet aramasında kullanılır)</label></div>
           <textarea id="jobLocation" class="memory-box" style="min-height:60px; padding:10px; font-size:13.5px;" placeholder="Örn: Nijerya, Kenya, Güney Afrika, Afrika geneli"></textarea>
@@ -2372,12 +2380,15 @@ document.getElementById('jobSearchBtn').addEventListener('click', async () => {
   const keywords = document.getElementById('jobKeywords').value.trim();
   const level = document.getElementById('jobLevel').value.trim();
   const location = document.getElementById('jobLocation').value.trim();
+  const recency = document.getElementById('jobRecency').value;
   const resultsBox = document.getElementById('jobResults');
   if(!keywords && !location){ resultsBox.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Anahtar kelime ya da konum gir.</p>'; return; }
   const fcKey = document.getElementById('firecrawlKey').value.trim();
-  const baseQ = `${keywords} ${level} ${location}`.trim();
+  const recencyTerms = {day:'bugün yeni ilan son 24 saat', week:'bu hafta yeni ilan son günler', month:'bu ay yeni ilan', any:''};
+  const recencyTag = recencyTerms[recency] || '';
+  const baseQ = `${keywords} ${level} ${location} ${recencyTag}`.trim();
   const queries = [
-    `${baseQ} iş ilanı job vacancy hiring`,
+    `${baseQ} açık iş ilanı job vacancy hiring now`,
     `${baseQ} site:linkedin.com/jobs`,
     `${baseQ} site:kariyer.net`,
     `${baseQ} site:indeed.com OR site:glassdoor.com`,
@@ -2405,7 +2416,9 @@ document.getElementById('jobSearchBtn').addEventListener('click', async () => {
   if(!firecrawlFailed){
     if(!snippetText){ resultsBox.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Bu arama araması gerçekten sonuçsuz döndü (API hatası değil) — farklı/daha genel anahtar kelimeler dene.</p>'; return; }
     const attempts = [];
-    const promptText = `[KULLANICININ KENDİ CV ÖZETİ — SADECE BAĞLAM İÇİN, BU BİR İLAN KAYNAĞI DEĞİLDİR, BURADAKİ ŞİRKETLERİ ASLA İLAN OLARAK LİSTELEME]:\n${cv || '(belirtilmedi)'}\n\nAranan pozisyon/kriterler: ${keywords || '(belirtilmedi)'}\nKonum: ${location || '(belirtilmedi)'}\n\n=== İNTERNET ARAMA SONUÇLARI (İLANLAR SADECE BURADAN ÇIKARILACAK) ===\n${snippetText}\n=== ARAMA SONUÇLARI SONU ===\n\nYukarıdaki arama sonuçlarında bulduğun TÜM gerçek, birbirinden farklı ilanları çıkar — atlamadan. Ne kadar çok gerçek ilan bulursan o kadar iyi (10, 30, hatta 100 olabilir), ama SAYIYI DOLDURMAK İÇİN TEK BİR TANESİNİ BİLE UYDURMA — sadece arama sonuçlarında gerçekten var olanları listele.`;
+    const recencyLabels = {day:'SON 24 SAAT içinde yayınlanmış', week:'SON 1 HAFTA içinde yayınlanmış', month:'SON 1 AY içinde yayınlanmış', any:null};
+    const recencyRule = recencyLabels[recency] ? `\n\nÇOK ÖNEMLİ: Kullanıcı sadece ${recencyLabels[recency]}, hâlâ AÇIK olan ilanları istiyor. Bir ilanın tarihi açıkça bu aralığın dışındaysa (örn. birkaç ay/yıl önce yayınlanmış, "kapandı"/"closed"/"expired" gibi bir ifade varsa) o ilanı LİSTELEME. Tarih net görünmüyorsa ilanı yine de ekle ama "tarih" alanını boş bırak, kullanıcı kendi karar versin.` : '';
+    const promptText = `[KULLANICININ KENDİ CV ÖZETİ — SADECE BAĞLAM İÇİN, BU BİR İLAN KAYNAĞI DEĞİLDİR, BURADAKİ ŞİRKETLERİ ASLA İLAN OLARAK LİSTELEME]:\n${cv || '(belirtilmedi)'}\n\nAranan pozisyon/kriterler: ${keywords || '(belirtilmedi)'}\nKonum: ${location || '(belirtilmedi)'}\n\n=== İNTERNET ARAMA SONUÇLARI (İLANLAR SADECE BURADAN ÇIKARILACAK) ===\n${snippetText}\n=== ARAMA SONUÇLARI SONU ===\n\nYukarıdaki arama sonuçlarında bulduğun TÜM gerçek, birbirinden farklı ilanları çıkar — atlamadan. Ne kadar çok gerçek ilan bulursan o kadar iyi (10, 30, hatta 100 olabilir), ama SAYIYI DOLDURMAK İÇİN TEK BİR TANESİNİ BİLE UYDURMA — sadece arama sonuçlarında gerçekten var olanları listele.${recencyRule}`;
     const result = await askCouncil(JOB_EXTRACT_FROM_SNIPPETS_PROMPT, promptText, null, null, attempts, null, true, 6000);
     if(!result){ resultsBox.innerHTML = `<p style="font-size:12.5px;color:var(--danger);">Sonuçlar analiz edilemedi.${describeAttempts(attempts).replace(/\n/g,'<br>')}</p>`; return; }
     let jobs;
@@ -2429,7 +2442,8 @@ document.getElementById('jobSearchBtn').addEventListener('click', async () => {
   // Firecrawl tamamen erişilemezse: önce basit bir tekrar dene, sonra sırayla gerçek arama yapabilen modelleri (Gemini, Perplexity) dene
   const fcNote = `<p style="font-size:12.5px;color:var(--text-muted);">Firecrawl başarısız oldu: ${firecrawlErrMsg} — yedek yöntemler deneniyor...</p>`;
   resultsBox.innerHTML = fcNote;
-  const promptText2 = `CV özeti:\n${cv || '(belirtilmedi)'}\n\nAranan pozisyon/kriterler: ${keywords || '(belirtilmedi)'}\nSeviye: ${level || '(belirtilmedi)'}\nKonum: ${location || '(belirtilmedi)'}`;
+  const recencyLabels2 = {day:'SON 24 SAAT içinde yayınlanmış', week:'SON 1 HAFTA içinde yayınlanmış', month:'SON 1 AY içinde yayınlanmış', any:null};
+  const promptText2 = `CV özeti:\n${cv || '(belirtilmedi)'}\n\nAranan pozisyon/kriterler: ${keywords || '(belirtilmedi)'}\nSeviye: ${level || '(belirtilmedi)'}\nKonum: ${location || '(belirtilmedi)'}${recencyLabels2[recency] ? `\n\nSadece ${recencyLabels2[recency]}, hâlâ açık ilanları getir.` : ''}`;
 
   // 1) Firecrawl'u tek, basit bir sorguyla tekrar dene
   try{
