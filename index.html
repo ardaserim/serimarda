@@ -122,16 +122,18 @@ header{
 .navrail-divider{height:1px; background:var(--border); margin:10px 4px;}
 
 aside{
-  width:320px; max-width:85vw; flex-shrink:0; border-right:1px solid var(--border); background:var(--surface);
-  overflow-y:auto; padding:16px;
-  position:fixed; top:0; bottom:0; left:236px; z-index:20; transform:translateX(-600px); transition:transform .25s cubic-bezier(.2,.7,.3,1);
+  width:360px; max-width:92vw; max-height:min(680px, 82vh); flex-shrink:0;
+  border:1px solid var(--border); border-radius:16px; background:var(--surface);
+  overflow-y:auto; padding:18px;
+  position:fixed; top:66px; right:70px; left:auto; z-index:30;
+  transform:translateY(-10px) scale(.97); opacity:0; pointer-events:none;
+  transition:transform .18s cubic-bezier(.2,.7,.3,1), opacity .18s;
   box-shadow:var(--shadow-lg);
 }
-aside.show{transform:translateX(0);}
-#chatSessionsPanel{left:auto; right:0; transform:translateX(600px);}
-#chatSessionsPanel.show{transform:translateX(0);}
+aside.show{transform:translateY(0) scale(1); opacity:1; pointer-events:auto;}
+#chatSessionsPanel{right:16px;}
 main{flex:1; display:flex; flex-direction:column; min-width:0;}
-.backdrop{display:none; position:fixed; inset:0; background:rgba(8,8,10,.55); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); z-index:19;}
+.backdrop{display:none; position:fixed; inset:0; background:rgba(8,8,10,.35); z-index:19;}
 .backdrop.show{display:block;}
 
 .tabbar{display:none;}
@@ -273,8 +275,9 @@ input[type=checkbox]{accent-color:var(--accent); width:16px; height:16px; cursor
   .navitem.active{font-weight:500;}
   .navrail-divider{display:none;}
   .navitem.active::before{left:20%; right:20%; top:-6px; bottom:auto; width:auto; height:3px; border-radius:0 0 3px 3px;}
-  aside{left:0;}
-  #chatSessionsPanel{left:auto;}
+  aside{left:50%; right:auto; top:50%; transform:translate(-50%,-50%) scale(.97); width:92vw; max-height:76vh;}
+  aside.show{transform:translate(-50%,-50%) scale(1);}
+  #chatSessionsPanel{left:50%; right:auto; top:50%;}
   main{padding-bottom:62px;}
   .files-wrap{padding-left:4px; padding-right:4px;}
   .msg{max-width:92%;}
@@ -427,7 +430,7 @@ input[type=checkbox]{accent-color:var(--accent); width:16px; height:16px; cursor
     <div class="section-title">Tanı</div>
     <button class="small-btn" id="healthCheckBtn">🩺 Sistem Kontrolü</button>
     <div id="healthResult" style="margin-top:8px; font-size:11.5px;"></div>
-    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 64</p>
+    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 65</p>
   </aside>
 
   <main>
