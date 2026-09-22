@@ -400,7 +400,7 @@ textarea.memory-box:focus{outline:none; border-color:var(--accent); box-shadow:0
     <div class="section-title">Tanı</div>
     <button class="small-btn" id="healthCheckBtn">🩺 Sistem Kontrolü</button>
     <div id="healthResult" style="margin-top:8px; font-size:11.5px;"></div>
-    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 55</p>
+    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 56</p>
   </aside>
 
   <main>
@@ -465,14 +465,17 @@ textarea.memory-box:focus{outline:none; border-color:var(--accent); box-shadow:0
           <button class="small-btn" id="jobCvUploadBtn" style="border-color:var(--accent); color:var(--accent);">📎 CV dosyası yükle (PDF / Word / .txt)</button>
           <button class="small-btn" id="jobCvFromLibrary">Dosyalarımdan PDF CV yükle</button>
 
-          <div class="field" style="margin-top:14px;"><label>Anahtar kelimeler / kriterler</label></div>
-          <input id="jobKeywords" class="memory-box" style="min-height:auto; padding:8px;" placeholder="Örn: İK, İnsan Kaynakları, İstanbul, İngilizce">
+          <div class="field" style="margin-top:14px;"><label>Anahtar kelimeler / kriterler / yetenekler (virgülle ayırarak birden fazla yazabilirsin)</label></div>
+          <textarea id="jobKeywords" class="memory-box" style="min-height:70px; padding:10px; font-size:13.5px;" placeholder="Örn: İK, İnsan Kaynakları, İstanbul, İngilizce, SAP, bordro, 5+ yıl deneyim"></textarea>
+
+          <div class="field" style="margin-top:14px;"><label>Seviye / unvan (opsiyonel — sonuçlar buna göre gruplanır)</label></div>
+          <input id="jobLevel" class="memory-box" style="min-height:auto; padding:9px;" placeholder="Örn: Uzman, Şef, Müdür, Direktör — boş bırakırsan hepsi gösterilir">
 
           <div class="field" style="margin-top:14px;"><label>Konum / ülke (internet aramasında kullanılır)</label></div>
-          <input id="jobLocation" class="memory-box" style="min-height:auto; padding:8px;" placeholder="Örn: Nijerya, Kenya, Güney Afrika, Afrika geneli">
+          <textarea id="jobLocation" class="memory-box" style="min-height:60px; padding:10px; font-size:13.5px;" placeholder="Örn: Nijerya, Kenya, Güney Afrika, Afrika geneli"></textarea>
           <button id="jobSearchBtn" style="width:100%; margin-top:8px; padding:10px; border-radius:6px; border:1px solid var(--accent-2); background:var(--accent-2-soft); color:var(--accent-2); font-weight:600; font-size:13px; cursor:pointer;">🔎 İnternette ara (tamamen ücretsiz)</button>
           <div class="field" style="margin-top:8px;"><label>Firecrawl API anahtarı (opsiyonel — boş bırakırsan kartsız/anahtarsız ücretsiz tier kullanılır)</label><input id="firecrawlKey" placeholder="fc-..."></div>
-          <p class="field-note">Firecrawl (kartsız, ayda 1.000 arama ücretsiz — firecrawl.dev) ile arar, sonuçları elindeki ücretsiz bir modelle (Groq/Cerebras/Gemini vb.) CV'ne göre sıralar. Hiçbir ücretli sağlayıcı gerektirmez.</p>
+          <p class="field-note">Firecrawl (kartsız, ayda 1.000 arama ücretsiz — firecrawl.dev) ile arar, sonuçları elindeki ücretsiz bir modelle (Gemini/Mistral vb.) CV'ne göre sıralar. Hiçbir ücretli sağlayıcı gerektirmez.</p>
 
           <div class="field" style="margin-top:14px;"><label>Ya da: İlan metinlerini elle yapıştır (birden fazla ilan olabilir)</label></div>
           <textarea id="jobListings" class="memory-box" style="min-height:160px;" placeholder="Kariyer.net/LinkedIn alarm mailinden ya da ilan sayfasından kopyaladığın metni buraya yapıştır..."></textarea>
@@ -671,7 +674,7 @@ textarea.memory-box:focus{outline:none; border-color:var(--accent); box-shadow:0
 
           <div class="section-title" style="margin-top:32px;">Gündem — Haber Ara</div>
           <p style="font-size:12.5px;color:var(--text-muted);margin:0 0 14px;">İlgilendiğin konularda güncel başlıkları internetten getirir.</p>
-          <input id="newsKeywords" class="memory-box" style="min-height:auto; padding:8px;" placeholder="Örn: inşaat sektörü, iş hukuku, İK, Türkiye ekonomisi">
+          <textarea id="newsKeywords" class="memory-box" style="min-height:56px; padding:9px; font-size:13.5px;" placeholder="Örn: inşaat sektörü, iş hukuku, İK, Türkiye ekonomisi"></textarea>
           <button id="newsFetchBtn" style="width:100%; margin-top:10px; padding:10px; border-radius:6px; border:none; background:var(--accent); color:#16171A; font-weight:600; font-size:13px; cursor:pointer;">Haberleri getir</button>
           <div id="newsResults" style="margin-top:18px; display:flex; flex-direction:column; gap:10px;"></div>
         </div>
@@ -685,7 +688,7 @@ textarea.memory-box:focus{outline:none; border-color:var(--accent); box-shadow:0
           <p style="font-size:12.5px;color:var(--text-muted);margin:0 0 14px;">İK/insan kaynakları dünyasından samimi, gerçekçi bir paylaşım yazısı — LinkedIn tarzı, hashtag'lerle.</p>
           <button class="small-btn" id="contentSuggestBtn" style="border-color:var(--accent-2); color:var(--accent-2);">🎲 Bugün İK alemi ne konuşuyor? (konu öner)</button>
           <div class="field" style="margin-top:12px;"><label>Konu (önerilen otomatik dolar, istersen değiştir)</label></div>
-          <input id="contentTopic" class="memory-box" style="min-height:auto; padding:8px;" placeholder="Örn: esnek çalışma modelleri, işe alımda yapay zekâ, sahadaki İK zorlukları">
+          <textarea id="contentTopic" class="memory-box" style="min-height:70px; padding:9px; font-size:13.5px;" placeholder="Örn: esnek çalışma modelleri, işe alımda yapay zekâ, sahadaki İK zorlukları"></textarea>
           <div class="field" style="margin-top:10px;"><label>Ton</label></div>
           <select id="contentTone" style="width:100%; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:12.5px; font-family:inherit;">
             <option value="samimi ve içten, gerçek bir insanın kendi deneyiminden yazdığı">Samimi / gerçekçi</option>
@@ -2173,7 +2176,7 @@ function syncProvidersFromDOM(){
 /* ---------------- İş İlanları ---------------- */
 const JOB_MATCH_SYSTEM_PROMPT = 'Sen bir kariyer danışmanısın. Sana bir CV özeti, arama kriterleri ve içinde birden fazla iş ilanı olabilecek bir metin verilecek. Metindeki HER ilanı ayrı ayrı incele: şirket adı, pozisyon, lokasyon bilgilerini çıkar; CV ve kriterlere göre 1-10 arası bir uygunluk puanı ver; puanın gerekçesini tek cümlede özetle. SADECE şu JSON formatında bir dizi döndür, başka hiçbir metin ekleme: [{"sirket":"...", "pozisyon":"...", "lokasyon":"...", "puan":0, "gerekce":"..."}] En yüksek puanlıdan en düşüğe sırala. İlan bulamazsan boş dizi [] döndür.';
 const JOB_SEARCH_SYSTEM_PROMPT = 'Sen internet üzerinden gerçek, güncel iş ilanı arayan bir kariyer danışmanısın. Kullanıcının verdiği pozisyon, konum ve kriterlere göre interneti ara, gerçekten var olan ve hâlâ açık görünen ilanları bul. Her ilan için şirket adı, pozisyon, lokasyon, ilan/son başvuru tarihi (varsa), ilanın bulunduğu sayfanın gerçek URL\'i, CV\'ye göre 1-10 uygunluk puanı ve tek cümlelik gerekçe çıkar. Emin olmadığın, uydurma veya kaynağı belirsiz ilanları asla ekleme — sadece gerçekten bulduğun, kaynağı olan ilanları listele. SADECE şu JSON formatında bir dizi döndür, başka hiçbir metin ekleme: [{"sirket":"...", "pozisyon":"...", "lokasyon":"...", "tarih":"...", "kaynak":"https://...", "puan":0, "gerekce":"..."}] En yüksek puanlıdan en düşüğe sırala. Hiç ilan bulamazsan boş dizi [] döndür.';
-const JOB_EXTRACT_FROM_SNIPPETS_PROMPT = 'Sen bir kariyer danışmanısın. Sana CV özeti, arama kriterleri ve "İNTERNET ARAMA SONUÇLARI" başlığı altında gerçek arama kayıtları verilecek. ÇOK ÖNEMLİ KURALLAR: (1) İlan listesi SADECE "İNTERNET ARAMA SONUÇLARI" bölümünden çıkarılır — CV özeti SADECE kullanıcının geçmiş/mevcut iş deneyimini anlamak içindir, ASLA bir ilan kaynağı değildir. (2) CV\'de geçen hiçbir şirketi (kullanıcının kendi çalıştığı/çalıştığı yerler) bir iş ilanı olarak ASLA listeleme — bu ciddi bir hata sayılır. (3) Arama sonuçlarında gerçekten iş ilanı olduğu anlaşılanları kullan, kayıtlarda yer almayan hiçbir bilgiyi uydurma, tarih veya şirket bulamazsan o alanı boş bırak. (4) Arama sonuçlarında bulduğun TÜM gerçek, birbirinden farklı ilanları çıkar (aynı ilanı iki kez yazma, ama sayıyı doldurmak için de ASLA uydurma ilan ekleme — bulduğun kadarı yeterli, az da olabilir çok da). Her ilan için şirket adı, pozisyon, lokasyon, (varsa) tarih, kaynak URL, CV\'ye göre 1-10 uygunluk puanı ve tek cümlelik gerekçe çıkar. SADECE şu JSON formatında bir dizi döndür, başka hiçbir metin ekleme: [{"sirket":"...", "pozisyon":"...", "lokasyon":"...", "tarih":"...", "kaynak":"https://...", "puan":0, "gerekce":"..."}] En yüksek puanlıdan en düşüğe sırala. Arama sonuçlarında gerçek ilan yoksa boş dizi [] döndür.';
+const JOB_EXTRACT_FROM_SNIPPETS_PROMPT = 'Sen bir kariyer danışmanısın. Sana CV özeti, arama kriterleri ve "İNTERNET ARAMA SONUÇLARI" başlığı altında gerçek arama kayıtları verilecek. ÇOK ÖNEMLİ KURALLAR: (1) İlan listesi SADECE "İNTERNET ARAMA SONUÇLARI" bölümünden çıkarılır — CV özeti SADECE kullanıcının geçmiş/mevcut iş deneyimini anlamak içindir, ASLA bir ilan kaynağı değildir. (2) CV\'de geçen hiçbir şirketi (kullanıcının kendi çalıştığı/çalıştığı yerler) bir iş ilanı olarak ASLA listeleme — bu ciddi bir hata sayılır. (3) Arama sonuçlarında gerçekten iş ilanı olduğu anlaşılanları kullan, kayıtlarda yer almayan hiçbir bilgiyi uydurma, tarih veya şirket bulamazsan o alanı boş bırak. (4) Arama sonuçlarında bulduğun TÜM gerçek, birbirinden farklı ilanları çıkar (aynı ilanı iki kez yazma, ama sayıyı doldurmak için de ASLA uydurma ilan ekleme — bulduğun kadarı yeterli, az da olabilir çok da). Her ilan için şirket adı, pozisyon, lokasyon, (varsa) tarih, kaynak URL, CV\'ye göre 1-10 uygunluk puanı, tek cümlelik gerekçe, VE pozisyon başlığından anlaşılan kıdem seviyesini ("Uzman", "Şef", "Müdür", "Direktör", "Genel Müdür", ya da bulamazsan "Belirtilmemiş") çıkar. SADECE şu JSON formatında bir dizi döndür, başka hiçbir metin ekleme: [{"sirket":"...", "pozisyon":"...", "seviye":"...", "lokasyon":"...", "tarih":"...", "kaynak":"https://...", "puan":0, "gerekce":"..."}] En yüksek puanlıdan en düşüğe sırala. Arama sonuçlarında gerçek ilan yoksa boş dizi [] döndür.';
 function loadFirecrawlKey(){
   document.getElementById('firecrawlKey').value = localStorage.getItem('orc_firecrawl_key') || '';
 }
@@ -2258,27 +2261,41 @@ document.getElementById('jobCvFromLibrary').addEventListener('click', async () =
 function renderJobResults(jobs, resultsBox){
   if(!Array.isArray(jobs) || jobs.length === 0){ resultsBox.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">İlan bulunamadı.</p>'; return; }
   resultsBox.innerHTML = '';
+  const levelOrder = ['Genel Müdür','Direktör','Müdür','Şef','Uzman','Belirtilmemiş'];
+  const groups = {};
   jobs.forEach(j => {
-    const card = document.createElement('div');
-    card.className = 'file-card';
-    card.style.flexDirection = 'row'; card.style.alignItems = 'center'; card.style.gap = '12px';
-    card.innerHTML = `
-      <div style="font-size:20px; font-weight:700; color:var(--accent); min-width:34px;">${j.puan ?? '—'}</div>
-      <div style="flex:1;">
-        <div class="fi-name">${j.pozisyon || '—'} · ${j.sirket || '—'}</div>
-        <div class="fi-meta">${j.lokasyon || ''}${j.tarih ? ' · ' + j.tarih : ''}</div>
-        <div class="fi-meta" style="margin-top:2px;">${j.gerekce || ''}</div>
-        ${j.kaynak ? `<a href="${j.kaynak}" target="_blank" rel="noopener" style="font-size:11px; color:var(--accent-2);">İlana git ↗</a>` : ''}
-      </div>
-      <button style="width:auto; padding:8px 12px;">Bu firmaya yaz</button>`;
-    card.querySelector('button').onclick = () => {
-      document.querySelector('.navitem[data-tab="chat"]').click();
-      const composer = document.getElementById('composerInput');
-      composer.value = `${j.sirket || 'Bu firma'} firmasındaki ${j.pozisyon || 'pozisyon'} ilanı için CV'mi gönder.`;
-      composer.dispatchEvent(new Event('input'));
-      composer.focus();
-    };
-    resultsBox.appendChild(card);
+    const lvl = levelOrder.includes(j.seviye) ? j.seviye : 'Belirtilmemiş';
+    (groups[lvl] = groups[lvl] || []).push(j);
+  });
+  levelOrder.forEach(lvl => {
+    const list = groups[lvl];
+    if(!list || list.length === 0) return;
+    const heading = document.createElement('div');
+    heading.style.cssText = 'font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em; margin:14px 0 4px;';
+    heading.textContent = `${lvl} (${list.length})`;
+    resultsBox.appendChild(heading);
+    list.forEach(j => {
+      const card = document.createElement('div');
+      card.className = 'file-card';
+      card.style.flexDirection = 'row'; card.style.alignItems = 'center'; card.style.gap = '12px';
+      card.innerHTML = `
+        <div style="font-size:20px; font-weight:700; color:var(--accent); min-width:34px;">${j.puan ?? '—'}</div>
+        <div style="flex:1;">
+          <div class="fi-name">${j.pozisyon || '—'} · ${j.sirket || '—'}</div>
+          <div class="fi-meta">${j.lokasyon || ''}${j.tarih ? ' · ' + j.tarih : ''}</div>
+          <div class="fi-meta" style="margin-top:2px;">${j.gerekce || ''}</div>
+          ${j.kaynak ? `<a href="${j.kaynak}" target="_blank" rel="noopener" style="font-size:11px; color:var(--accent-2);">İlana git ↗</a>` : ''}
+        </div>
+        <button style="width:auto; padding:8px 12px;">Bu firmaya yaz</button>`;
+      card.querySelector('button').onclick = () => {
+        document.querySelector('.navitem[data-tab="chat"]').click();
+        const composer = document.getElementById('composerInput');
+        composer.value = `${j.sirket || 'Bu firma'} firmasındaki ${j.pozisyon || 'pozisyon'} ilanı için CV'mi gönder.`;
+        composer.dispatchEvent(new Event('input'));
+        composer.focus();
+      };
+      resultsBox.appendChild(card);
+    });
   });
 }
 const HEADHUNTER_EXTRACT_PROMPT = 'Sen bir kariyer danışmanısın. Sana arama kriterleri ve gerçek internet arama sonuçlarından alınmış kayıtlar verilecek. SADECE bu kayıtlarda gerçekten bir işe alım ajansı/headhunter/insan kaynakları danışmanlık firması olduğu anlaşılan, GERÇEK kayıtları kullan — kayıtlarda yer almayan hiçbir bilgiyi uydurma, iletişim bilgisi bulamazsan o alanı boş bırak. Her ajans için firma adı, uzmanlık alanı (varsa), web sitesi, (varsa) e-posta/iletişim sayfası linki çıkar. SADECE şu JSON formatında bir dizi döndür, başka hiçbir metin ekleme: [{"firma":"...", "uzmanlik":"...", "site":"https://...", "iletisim":"..."}] Kayıtlarda gerçek ajans yoksa boş dizi [] döndür.';
@@ -2354,11 +2371,12 @@ document.getElementById('jobSearchBtn').addEventListener('click', async () => {
   syncProvidersFromDOM();
   const cv = jobCvText.value.trim();
   const keywords = document.getElementById('jobKeywords').value.trim();
+  const level = document.getElementById('jobLevel').value.trim();
   const location = document.getElementById('jobLocation').value.trim();
   const resultsBox = document.getElementById('jobResults');
   if(!keywords && !location){ resultsBox.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Anahtar kelime ya da konum gir.</p>'; return; }
   const fcKey = document.getElementById('firecrawlKey').value.trim();
-  const baseQ = `${keywords} ${location}`.trim();
+  const baseQ = `${keywords} ${level} ${location}`.trim();
   const queries = [
     `${baseQ} iş ilanı job vacancy hiring`,
     `${baseQ} site:linkedin.com/jobs`,
@@ -2371,16 +2389,22 @@ document.getElementById('jobSearchBtn').addEventListener('click', async () => {
   resultsBox.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Firecrawl ile birden fazla kaynakta aranıyor (ücretsiz)...</p>';
   let snippetText = '';
   let firecrawlFailed = false;
+  let firecrawlErrMsg = '';
   try{
-    const parts = await Promise.all(queries.map(q => firecrawlSearch(q, fcKey, 15).catch(() => '')));
+    const queryErrors = [];
+    const parts = await Promise.all(queries.map(q => firecrawlSearch(q, fcKey, 15).catch(e => { queryErrors.push(e.message); return ''; })));
     snippetText = parts.filter(Boolean).join('\n\n');
+    if(!snippetText && queryErrors.length === queries.length){
+      firecrawlFailed = true;
+      firecrawlErrMsg = queryErrors[0] + (fcKey ? '' : ' — Firecrawl anahtarı girilmemiş, ücretsiz kotayla deneniyor olabilir, bir anahtar eklemen sonuçları iyileştirebilir.');
+    }
   }catch(err){
     firecrawlFailed = true;
-    var firecrawlErrMsg = err.message;
+    firecrawlErrMsg = err.message;
   }
 
   if(!firecrawlFailed){
-    if(!snippetText){ resultsBox.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">İnternette eşleşen ilan bulunamadı.</p>'; return; }
+    if(!snippetText){ resultsBox.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Bu arama araması gerçekten sonuçsuz döndü (API hatası değil) — farklı/daha genel anahtar kelimeler dene.</p>'; return; }
     const attempts = [];
     const promptText = `[KULLANICININ KENDİ CV ÖZETİ — SADECE BAĞLAM İÇİN, BU BİR İLAN KAYNAĞI DEĞİLDİR, BURADAKİ ŞİRKETLERİ ASLA İLAN OLARAK LİSTELEME]:\n${cv || '(belirtilmedi)'}\n\nAranan pozisyon/kriterler: ${keywords || '(belirtilmedi)'}\nKonum: ${location || '(belirtilmedi)'}\n\n=== İNTERNET ARAMA SONUÇLARI (İLANLAR SADECE BURADAN ÇIKARILACAK) ===\n${snippetText}\n=== ARAMA SONUÇLARI SONU ===\n\nYukarıdaki arama sonuçlarında bulduğun TÜM gerçek, birbirinden farklı ilanları çıkar — atlamadan. Ne kadar çok gerçek ilan bulursan o kadar iyi (10, 30, hatta 100 olabilir), ama SAYIYI DOLDURMAK İÇİN TEK BİR TANESİNİ BİLE UYDURMA — sadece arama sonuçlarında gerçekten var olanları listele.`;
     const result = await askCouncil(JOB_EXTRACT_FROM_SNIPPETS_PROMPT, promptText, null, null, attempts, null, true, 6000);
@@ -2388,6 +2412,10 @@ document.getElementById('jobSearchBtn').addEventListener('click', async () => {
     let jobs;
     try{ jobs = JSON.parse(result.text.replace(/```json|```/g,'').trim()); }
     catch(e){ resultsBox.innerHTML = `<p style="font-size:12.5px;color:var(--text-muted);">${result.text}</p>`; return; }
+    if(Array.isArray(jobs) && level){
+      const levelLower = level.toLowerCase();
+      jobs = jobs.filter(j => (j.seviye || '').toLowerCase().includes(levelLower) || (j.pozisyon || '').toLowerCase().includes(levelLower));
+    }
     if(Array.isArray(jobs) && cv){
       const cvLower = cv.toLowerCase();
       jobs = jobs.filter(j => {
