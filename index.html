@@ -430,7 +430,7 @@ input[type=checkbox]{accent-color:var(--accent); width:16px; height:16px; cursor
     <div class="section-title">Tanı</div>
     <button class="small-btn" id="healthCheckBtn">🩺 Sistem Kontrolü</button>
     <div id="healthResult" style="margin-top:8px; font-size:11.5px;"></div>
-    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 65</p>
+    <p style="text-align:center; font-size:10px; color:var(--text-faint); margin-top:16px;">serimarda.ai · sürüm 66</p>
   </aside>
 
   <main>
@@ -1151,6 +1151,7 @@ function providerCardHtml(p, idx){
       <div class="field"><label>Model adı</label><input type="text" data-act="model" data-idx="${idx}" value="${p.model || ''}"></div>
       ${canListModels ? `
         <button class="small-btn" data-act="fetchmodels" data-idx="${idx}" style="border-color:var(--accent-2); color:var(--accent-2);">Güncel modelleri getir</button>
+        <div data-role="fetchStatus" data-idx="${idx}" style="font-size:11px; color:var(--text-faint); margin-top:5px; display:none;"></div>
         <select data-act="modelpick" data-idx="${idx}" style="display:none; width:100%; margin-top:6px; background:var(--surface); border:1px solid var(--border); color:var(--text); padding:7px 8px; border-radius:5px; font-size:12.5px; font-family:inherit;"></select>
       ` : ''}
       ${p.format === 'yandex' ? `<div class="field"><label>Folder ID</label><input type="text" data-act="folder" data-idx="${idx}" value="${p.folderId||''}"></div>` : ''}
@@ -1237,20 +1238,24 @@ function renderProviders(){
     btn.addEventListener('click', async () => {
       const idx = +btn.dataset.idx;
       const p = providers[idx];
-      if(!p.key){ addSysNote('Önce bu sağlayıcının API anahtarını gir.', true); return; }
+      const statusEl = list.querySelector(`[data-role="fetchStatus"][data-idx="${idx}"]`);
+      const showStatus = (text, isError) => { if(statusEl){ statusEl.textContent = text; statusEl.style.display = 'block'; statusEl.style.color = isError ? 'var(--danger)' : 'var(--text-faint)'; } };
+      if(!p.key){ showStatus('Önce API anahtarını gir.', true); return; }
       const originalLabel = btn.textContent;
       btn.textContent = 'Getiriliyor...'; btn.disabled = true;
+      showStatus('Getiriliyor...', false);
       try{
         const models = await fetchModelsFor(p);
         const sel = list.querySelector(`select[data-act="modelpick"][data-idx="${idx}"]`);
         if(!models || models.length === 0){
-          addSysNote('Model listesi alınamadı ya da boş döndü.', true);
+          showStatus('Model listesi alınamadı ya da boş döndü.', true);
         } else {
           sel.innerHTML = '<option value="">— listeden model seç (' + models.length + ' model) —</option>' + models.map(m => `<option value="${m}">${m}</option>`).join('');
           sel.style.display = 'block';
+          showStatus(`✓ ${models.length} model bulundu.`, false);
         }
       }catch(err){
-        addSysNote(`${p.name} model listesi alınamadı: ${err.message}`, true);
+        showStatus(`Alınamadı: ${err.message}`, true);
       }
       btn.textContent = originalLabel; btn.disabled = false;
     });
